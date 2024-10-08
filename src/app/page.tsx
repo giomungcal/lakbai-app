@@ -1,7 +1,9 @@
 "use client";
 
+import MaxWidthWrapper from "@/components/MaxWidthWrapper";
+import Navbar from "@/components/Navbar";
+import { createClient } from "@/utils/supabase/client";
 import { useEffect } from "react";
-import { createClient } from "./utils/supabase/client";
 
 export default function Home() {
   const supabase = createClient();
@@ -22,5 +24,12 @@ export default function Home() {
     fetchData();
   }, []);
 
-  return <h1>hey</h1>;
+  return (
+    <>
+      {/* Hero Section */}
+      <section>
+        <h1>Hero Section</h1>
+      </section>
+    </>
+  );
 }
