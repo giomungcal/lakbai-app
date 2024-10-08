@@ -1,5 +1,8 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogClose,
@@ -29,21 +32,45 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { EMOJIS, NUMBER_OF_PEOPLE } from "@/validators/options";
+import {
+  EMOJIS,
+  EmojiValue,
+  NUMBER_OF_PEOPLE,
+  NumberOfPeopleValue,
+} from "@/validators/options";
 import { Label } from "@radix-ui/react-label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
-import { Calendar, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
 import Link from "next/link";
-import { format } from "path";
 import { useState } from "react";
+import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import { useMediaQuery } from "usehooks-ts";
 import { useTripsContext } from "../_context/AppContext";
 
-const DashboardPage = ({ userID }: { userID: string }) => {
+interface DashboardPage {
+  userId?: string | null;
+  trips?: TripsProps[] | null;
+}
+
+type TripsProps = {
+  emoji: string;
+  id: string;
+  name: string;
+  address: string;
+  start_date: string;
+  end_date: string;
+  num_of_people: string;
+  is_created_by_lakbai: boolean;
+  owner_id: string;
+  created_at: string;
+};
+
+const DashboardPage = ({ userId, trips }: DashboardPage) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const [openTripDetails, setOpenTripDetails] = useState(false);
@@ -109,13 +136,6 @@ const DashboardPage = ({ userID }: { userID: string }) => {
                 </DrawerContent>
               </Drawer>
             )}
-
-            <Link
-              href="/"
-              className={buttonVariants({ size: "lg", variant: "outline" })}
-            >
-              Home
-            </Link>
           </div>
         </section>
 
@@ -124,7 +144,7 @@ const DashboardPage = ({ userID }: { userID: string }) => {
 
         {/* Trips Section */}
 
-        {TRIPS.length === 0 ? (
+        {trips && trips.length === 0 ? (
           <div className="w-full h-full border-border border-2 bg-card rounded-3xl border-dashed text-center space-y-1 flex flex-col justify-center items-center">
             <span className="text-4xl">👻</span>
             <h2 className="text-2xl font-semibold text-card-foreground">
@@ -136,52 +156,69 @@ const DashboardPage = ({ userID }: { userID: string }) => {
           </div>
         ) : (
           <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full gap-4 ">
-            {TRIPS.map(
-              ({ emoji, name, address, dateStart, dateEnd, number }, index) => {
-                return (
-                  <div
-                    key={index}
-                    className="flex flex-col justify-between h-52 bg-card border-border border-2 rounded-2xl p-5"
-                  >
-                    <div className="flex flex-col space-y-2">
-                      <div className="flex space-x-2 text-xl font-bold">
-                        <span>{emoji}</span>
-                        <h2 className="truncate">{name}</h2>
-                      </div>
+            {trips &&
+              trips.map(
+                (
+                  {
+                    emoji,
+                    name,
+                    address,
+                    start_date: dateStart,
+                    end_date: dateEnd,
+                    num_of_people: number,
+                  },
+                  index
+                ) => {
+                  const numOfPeople = NUMBER_OF_PEOPLE.find(
+                    (i) => i.value === number
+                  );
 
-                      <div className="flex space-x-2">
-                        <Badge
-                          variant="outline"
-                          className="text-xs space-x-2 truncate"
+                  return (
+                    <div
+                      key={index}
+                      className="flex flex-col justify-between h-52 bg-card border-border border-2 rounded-2xl p-5"
+                    >
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex space-x-2 text-xl font-bold">
+                          <span>{emoji}</span>
+                          <h2 className="truncate">{name}</h2>
+                        </div>
+
+                        <div className="flex space-x-2">
+                          <Badge
+                            variant="outline"
+                            className="text-xs space-x-2 truncate"
+                          >
+                            📍 {address}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="text-xs space-x-2 truncate"
+                          >
+                            {numOfPeople
+                              ? numOfPeople.display!.split("(").shift()
+                              : "👽 Maybe solo?"}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex flex-col space-y-2">
+                        <p className="text-xs truncate font-semibold text-muted-foreground">
+                          📆 {dateStart} to {dateEnd}
+                        </p>
+                        <Link
+                          href="/"
+                          className={buttonVariants({
+                            size: "lg",
+                            variant: "default",
+                          })}
                         >
-                          📍 {address}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className="text-xs space-x-2 truncate"
-                        >
-                          🧍‍♂️ {number}
-                        </Badge>
+                          Open Itinerary
+                        </Link>
                       </div>
                     </div>
-                    <div className="flex flex-col space-y-2">
-                      <p className="text-xs truncate font-semibold text-muted-foreground">
-                        📆 {dateStart} - {dateEnd}
-                      </p>
-                      <Link
-                        href="/"
-                        className={buttonVariants({
-                          size: "lg",
-                          variant: "default",
-                        })}
-                      >
-                        Open Itinerary
-                      </Link>
-                    </div>
-                  </div>
-                );
-              }
-            )}
+                  );
+                }
+              )}
             <Button
               onClick={() => {
                 setOpenTripDetails(true);
@@ -202,7 +239,7 @@ const DashboardPage = ({ userID }: { userID: string }) => {
 
 export default DashboardPage;
 
-function AddTripForm({ className }) {
+function AddTripForm({ className }: { className: string }) {
   const {
     emoji,
     setEmoji,
@@ -215,9 +252,6 @@ function AddTripForm({ className }) {
     numOfPeople,
     setNumOfPeople,
   } = useTripsContext();
-
-  type NumberOfPeopleValue = (typeof NUMBER_OF_PEOPLE)[number]["value"];
-  type EmojiValue = (typeof EMOJIS)[number]["value"];
 
   return (
     <form className={cn("grid items-start gap-4", className)}>
@@ -256,9 +290,8 @@ function AddTripForm({ className }) {
           <Label htmlFor="name">Destination</Label>
           <GooglePlacesAutocomplete
             apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
-            placeholder="Enter location"
             selectProps={{
-              onChange: (value) => setAddress(value.label),
+              onChange: (value) => setAddress(value!.label),
             }}
           />
         </div>
@@ -285,7 +318,7 @@ function AddTripForm({ className }) {
               <Calendar
                 mode="single"
                 selected={startDate}
-                onSelect={setStartDate}
+                onSelect={(value) => value && setStartDate(value)}
                 initialFocus
               />
             </PopoverContent>
@@ -311,7 +344,7 @@ function AddTripForm({ className }) {
               <Calendar
                 mode="single"
                 selected={endDate}
-                onSelect={setEndDate}
+                onSelect={(value) => value && setEndDate(value)}
                 initialFocus
               />
             </PopoverContent>

@@ -1,7 +1,12 @@
 "use client";
 
 import { createClient } from "@/utils/supabase/client";
-import { EMOJIS, NUMBER_OF_PEOPLE } from "@/validators/options";
+import {
+  EMOJIS,
+  EmojiValue,
+  NUMBER_OF_PEOPLE,
+  NumberOfPeopleValue,
+} from "@/validators/options";
 import {
   createContext,
   Dispatch,
@@ -14,19 +19,17 @@ import {
 
 interface TripsContext {
   name?: string;
-  setName: Dispatch<SetStateAction<string>>;
+  setName: Dispatch<SetStateAction<string | null>>;
   address?: string;
-  setAddress: Dispatch<SetStateAction<string>>;
-  emoji: (typeof EMOJIS)[number]["value"];
-  setEmoji: Dispatch<SetStateAction<(typeof EMOJIS)[number]["value"]>>;
-  startDate: string;
-  setStartDate: Dispatch<SetStateAction<string>>;
-  endDate: string;
-  setEndDate: Dispatch<SetStateAction<string>>;
-  numOfPeople: (typeof NUMBER_OF_PEOPLE)[number]["value"];
-  setNumOfPeople: Dispatch<
-    SetStateAction<(typeof NUMBER_OF_PEOPLE)[number]["value"]>
-  >;
+  setAddress: Dispatch<SetStateAction<string | null>>;
+  emoji: EmojiValue;
+  setEmoji: Dispatch<SetStateAction<EmojiValue>>;
+  startDate: Date;
+  setStartDate: Dispatch<SetStateAction<Date>>;
+  endDate: Date;
+  setEndDate: Dispatch<SetStateAction<Date>>;
+  numOfPeople: NumberOfPeopleValue;
+  setNumOfPeople: Dispatch<SetStateAction<NumberOfPeopleValue>>;
 }
 
 interface TripsContextProviderProps {
@@ -40,14 +43,12 @@ export const TripsContextProvider = ({
 }: TripsContextProviderProps) => {
   const [name, setName] = useState<string | null>(null);
   const [address, setAddress] = useState<string | null>(null);
-  const [emoji, setEmoji] = useState<(typeof EMOJIS)[number]["value"]>(
-    EMOJIS[0]["value"]
+  const [emoji, setEmoji] = useState<EmojiValue>(EMOJIS[0]["value"]);
+  const [startDate, setStartDate] = useState<Date>(new Date());
+  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [numOfPeople, setNumOfPeople] = useState<NumberOfPeopleValue>(
+    NUMBER_OF_PEOPLE[0]["value"]
   );
-  const [startDate, setStartDate] = useState<string | null>(null);
-  const [endDate, setEndDate] = useState<string | null>(null);
-  const [numOfPeople, setNumOfPeople] = useState<
-    (typeof NUMBER_OF_PEOPLE)[number]["value"]
-  >(NUMBER_OF_PEOPLE[0]["value"]);
   const [isFormComplete, setIsFormComplete] = useState<boolean>(false);
   const [tripDetails, setTripDetails] = useState({
     itineraryID31342: {
@@ -86,21 +87,6 @@ export const TripsContextProvider = ({
   // }, [name, address, emoji, startDate, endDate, numOfPeople]);
 
   // function saveTrip(params: type) {}
-
-  const supabase = createClient();
-
-  async function fetchUserData() {
-    const { data: activities, error } = await supabase
-      .from("activities")
-      .select("*")
-      .eq("itinerary_id", "itineraryid_2");
-    console.log(activities);
-  }
-
-  useEffect(() => {
-    console.log("hey");
-    fetchUserData();
-  }, []);
 
   return (
     <TripsContext.Provider
