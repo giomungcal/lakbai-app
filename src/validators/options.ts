@@ -33,3 +33,14 @@ export const NUMBER_OF_PEOPLE = [
 ] as const;
 
 export type NumberOfPeopleValue = (typeof NUMBER_OF_PEOPLE)[number]["value"];
+
+// ---------------------------------------
+
+export type ItineraryDetailsProps = {
+  name: string | null;
+  address: string | null;
+  emoji: string;
+  startDate: Date;
+  endDate: Date;
+  numOfPeople: string;
+};

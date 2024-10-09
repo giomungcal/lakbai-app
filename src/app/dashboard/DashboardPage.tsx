@@ -32,12 +32,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { supabaseClient } from "@/utils/supabase/supabaseClient";
 import {
   EMOJIS,
   EmojiValue,
   NUMBER_OF_PEOPLE,
   NumberOfPeopleValue,
 } from "@/validators/options";
+import { useAuth } from "@clerk/nextjs";
 import { Label } from "@radix-ui/react-label";
 import {
   Popover,
@@ -47,14 +49,14 @@ import {
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import { useMediaQuery } from "usehooks-ts";
 import { useTripsContext } from "../_context/AppContext";
 
 interface DashboardPage {
-  userId?: string | null;
-  trips?: TripsProps[] | null;
+  userId?: string;
+  serverTrips?: TripsProps[];
 }
 
 type TripsProps = {
@@ -70,10 +72,44 @@ type TripsProps = {
   created_at: string;
 };
 
-const DashboardPage = ({ userId, trips }: DashboardPage) => {
+const DashboardPage = ({ userId, serverTrips }: DashboardPage) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
+  const [trips, setTrips] = useState(serverTrips);
   const [openTripDetails, setOpenTripDetails] = useState(false);
+  const { addTrip } = useTripsContext();
+
+  async function handleTripSave() {
+    await addTrip();
+    setOpenTripDetails(false);
+  }
+  const { getToken } = useAuth();
+
+  useEffect(() => {
+    const subscribeToRealtime = async () => {
+      const supabaseToken = await getToken({ template: "lakbai-supabase" });
+      const supabase = await supabaseClient(supabaseToken);
+      const channel = supabase
+        .channel("custom-all-channel")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "itineraries",
+          },
+          (payload) => {
+            console.log("INSERT event received!", payload);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+    subscribeToRealtime();
+  }, []);
 
   return (
     <div className="flex justify-center w-full min-h-screen ">
@@ -106,7 +142,7 @@ const DashboardPage = ({ userId, trips }: DashboardPage) => {
                     <DialogClose asChild>
                       <Button variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button>Save</Button>
+                    <Button onClick={handleTripSave}>Save</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -131,7 +167,7 @@ const DashboardPage = ({ userId, trips }: DashboardPage) => {
                     <DrawerClose asChild>
                       <Button variant="outline">Cancel</Button>
                     </DrawerClose>
-                    <Button>Save</Button>
+                    <Button onClick={handleTripSave}>Save</Button>
                   </DrawerFooter>
                 </DrawerContent>
               </Drawer>
@@ -251,6 +287,7 @@ function AddTripForm({ className }: { className: string }) {
     endDate,
     numOfPeople,
     setNumOfPeople,
+    addTrip,
   } = useTripsContext();
 
   return (

@@ -1,19 +1,23 @@
 "use client";
 
+import { toast } from "@/hooks/use-toast";
 import { createClient } from "@/utils/supabase/client";
+import { supabaseClient } from "@/utils/supabase/supabaseClient";
+import { addItinerary } from "@/utils/supabase/supabaseRequests";
 import {
   EMOJIS,
   EmojiValue,
+  ItineraryDetailsProps,
   NUMBER_OF_PEOPLE,
   NumberOfPeopleValue,
 } from "@/validators/options";
+import { useAuth } from "@clerk/nextjs";
 import {
   createContext,
   Dispatch,
   ReactNode,
   SetStateAction,
   useContext,
-  useEffect,
   useState,
 } from "react";
 
@@ -30,6 +34,7 @@ interface TripsContext {
   setEndDate: Dispatch<SetStateAction<Date>>;
   numOfPeople: NumberOfPeopleValue;
   setNumOfPeople: Dispatch<SetStateAction<NumberOfPeopleValue>>;
+  addTrip: () => void;
 }
 
 interface TripsContextProviderProps {
@@ -41,6 +46,8 @@ const TripsContext = createContext<TripsContext | null>(null);
 export const TripsContextProvider = ({
   children,
 }: TripsContextProviderProps) => {
+  const { userId, getToken } = useAuth();
+
   const [name, setName] = useState<string | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [emoji, setEmoji] = useState<EmojiValue>(EMOJIS[0]["value"]);
@@ -49,44 +56,66 @@ export const TripsContextProvider = ({
   const [numOfPeople, setNumOfPeople] = useState<NumberOfPeopleValue>(
     NUMBER_OF_PEOPLE[0]["value"]
   );
-  const [isFormComplete, setIsFormComplete] = useState<boolean>(false);
-  const [tripDetails, setTripDetails] = useState({
-    itineraryID31342: {
-      name,
-      address,
-      emoji,
-      startDate,
-      endDate,
-      numOfPeople,
-    },
-  });
-  // For testing only
-  // useEffect(() => {
-  //   const tripDetails = {
-  //     itineraryID31342: {
-  //       name,
-  //       address,
-  //       emoji,
-  //       startDate,
-  //       endDate,
-  //       numOfPeople,
-  //     },
-  //   };
-  //   console.log(tripDetails);
 
-  //   console.log(Object.keys(tripDetails["itineraryID31342"]));
+  function validationForm() {
+    const validationErrors: string[] = [];
 
-  //   if (
-  //     Object.keys(tripDetails["itineraryID31342"]).every(
-  //       (key) => tripDetails["itineraryID31342"][key] !== null
-  //     )
-  //   ) {
-  //     console.log("Form is complete!");
-  //     setIsFormComplete(true);
-  //   }
-  // }, [name, address, emoji, startDate, endDate, numOfPeople]);
+    if (!name) validationErrors.push("Name is required.");
+    if (!address) validationErrors.push("Address is required.");
+    if (!emoji) validationErrors.push("Emoji selection is required.");
+    if (!startDate) validationErrors.push("Start date is required.");
+    if (!endDate) validationErrors.push("End date is required.");
+    if (!numOfPeople) validationErrors.push("Number of people is required.");
 
-  // function saveTrip(params: type) {}
+    return validationErrors.length === 0;
+  }
+
+  function resetValues() {
+    setName(null);
+    setAddress(null);
+    setEmoji(EMOJIS[0]["value"]);
+    setStartDate(new Date());
+    setEndDate(new Date());
+    setNumOfPeople(NUMBER_OF_PEOPLE[0]["value"]);
+  }
+
+  async function addTrip() {
+    if (validationForm() && userId) {
+      const itineraryDetails: ItineraryDetailsProps = {
+        name,
+        address,
+        emoji,
+        startDate,
+        endDate,
+        numOfPeople,
+      };
+      const token = await getToken({ template: "lakbai-supabase" });
+
+      if (token) {
+        const itinerary = await addItinerary(userId, itineraryDetails, token);
+        resetValues();
+        if (itinerary) {
+          toast({
+            title: "Success!",
+            description: "Itinerary added successfully!",
+            variant: "default",
+          });
+        }
+      } else {
+        toast({
+          title: "Token Error",
+          description: "There has been an error getting a token from Clerk",
+          variant: "destructive",
+        });
+      }
+    } else {
+      toast({
+        title: "Incomplete Form",
+        description: "Please fill in all required fields before submitting.",
+        variant: "destructive",
+      });
+    }
+  }
 
   return (
     <TripsContext.Provider
@@ -101,6 +130,7 @@ export const TripsContextProvider = ({
         setEndDate,
         numOfPeople,
         setNumOfPeople,
+        addTrip,
       }}
     >
       {children}
