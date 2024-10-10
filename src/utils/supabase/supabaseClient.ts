@@ -16,5 +16,6 @@ export const supabaseClient = async (supabaseToken?: string) => {
       global: { headers: headers },
     }
   );
+
   return supabase;
 };

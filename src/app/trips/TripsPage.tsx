@@ -71,27 +71,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   const [trips, setTrips] = useState(serverTrips);
   const [openTripDetails, setOpenTripDetails] = useState(false);
   const { addTrip } = useTripsContext();
-
-  async function handleTripSave() {
-    // Add the trip to database
-    const isResultSuccessful = await addTrip();
-
-    if (isResultSuccessful) setOpenTripDetails(false);
-
-    // Since Realtime doesn't like to work atm, we will get the updated trips from the DB and re-render it
-    syncTripsWithDatabase();
-  }
-
-  async function syncTripsWithDatabase() {
-    const token = await getToken({ template: "lakbai-supabase" });
-    if (!token || !userId) {
-      console.error("No token received from Clerk");
-      return;
-    }
-
-    const updatedItineraries = await getItineraries({ userId, token });
-    setTrips(updatedItineraries);
-  }
+  const [isRealtimeExpired, setIsRealtimeExpired] = useState<boolean>(false);
 
   useEffect(() => {
     const subscribeToRealtime = async () => {
@@ -106,7 +86,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
         .on(
           "postgres_changes",
           {
-            event: "*",
+            event: "DELETE",
             schema: "public",
             table: "itineraries",
           },
@@ -114,7 +94,6 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
             if (trips?.some((t) => t.id === payload.old.id)) {
               toast({
                 title: "A trip has been deleted.",
-                description: `Trip ID: ${payload.old.name} has been deleted.`,
                 variant: "default",
               });
               syncTripsWithDatabase();
@@ -129,8 +108,6 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
             table: "itineraries",
           },
           (payload) => {
-            console.log(payload);
-
             if (trips?.some((t) => t.owner_id === payload.new.owner_id)) {
               toast({
                 title: "A trip has been updated.",
@@ -149,8 +126,6 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
             table: "itineraries",
           },
           (payload) => {
-            console.log(payload);
-
             if (trips?.some((t) => t.owner_id === payload.new.owner_id)) {
               toast({
                 title: "A new trip has been added.",
@@ -167,8 +142,35 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
         supabase.removeChannel(channel);
       };
     };
+
     subscribeToRealtime();
   }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      toast({
+        title: "Refresh page to get latest collaboration updates.",
+        variant: "default",
+      });
+    }, 25000);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  async function handleTripSave() {
+    const isResultSuccessful = await addTrip();
+    if (isResultSuccessful) setOpenTripDetails(false);
+  }
+
+  async function syncTripsWithDatabase() {
+    const token = await getToken({ template: "lakbai-supabase" });
+    if (!token || !userId) {
+      console.error("No token received from Clerk");
+      return;
+    }
+    const updatedItineraries = await getItineraries({ userId, token });
+    setTrips(updatedItineraries);
+  }
 
   return (
     <div className="flex justify-center w-full min-h-screen ">
