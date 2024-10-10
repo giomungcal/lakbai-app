@@ -9,7 +9,18 @@ interface PageProps {
 
 const Page = async ({ searchParams }: PageProps) => {
   const { id } = searchParams;
-  const { getToken } = auth();
+  const { userId, getToken } = auth();
+
+  async function fetchItineraries() {
+    if (!userId) {
+      const itineraries = await fetchItineraries();
+      return itineraries;
+    } else {
+      const itineraries = await fetchItineraries();
+    }
+  }
+
+  fetchItineraries();
 
   async function fetchActivities() {
     try {
@@ -30,12 +41,9 @@ const Page = async ({ searchParams }: PageProps) => {
     return "user";
   }
 
-  async function fetchItineraries() {
-    return "user";
-  }
-
   //   Check from itineraries if itinerary is 1. isPublic and 2. isUser the owner?
   const isOwner = false;
+  const isPublic = false;
 
   //   const [activities, userRole] = await Promise.all([
   //     fetchActivities(),

@@ -84,7 +84,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
 
   async function syncTripsWithDatabase() {
     const token = await getToken({ template: "lakbai-supabase" });
-    if (!token) {
+    if (!token || !userId) {
       console.error("No token received from Clerk");
       return;
     }
@@ -97,12 +97,14 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
     const subscribeToRealtime = async () => {
       const supabaseToken = await getToken({ template: "lakbai-supabase" });
       const supabase = await supabaseClient(supabaseToken);
+      supabase.realtime.setAuth(supabaseToken);
+
       const channel = supabase
         .channel("custom-all-channel")
         .on(
           "postgres_changes",
           {
-            event: "DELETE",
+            event: "*",
             schema: "public",
             table: "itineraries",
           },
@@ -110,7 +112,47 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
             if (trips?.some((t) => t.id === payload.old.id)) {
               toast({
                 title: "A trip has been deleted.",
-                description: `Trip ID: ${payload.old.id} has been deleted.`,
+                description: `Trip ID: ${payload.old.name} has been deleted.`,
+                variant: "default",
+              });
+              syncTripsWithDatabase();
+            }
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "itineraries",
+          },
+          (payload) => {
+            console.log(payload);
+
+            if (trips?.some((t) => t.owner_id === payload.new.owner_id)) {
+              toast({
+                title: "A trip has been updated.",
+                description: `Trip: ${payload.new.name} has been updated.`,
+                variant: "default",
+              });
+              syncTripsWithDatabase();
+            }
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "itineraries",
+          },
+          (payload) => {
+            console.log(payload);
+
+            if (trips?.some((t) => t.owner_id === payload.new.owner_id)) {
+              toast({
+                title: "A new trip has been added.",
+                description: `Trip: ${payload.new.name} has been added.`,
                 variant: "default",
               });
               syncTripsWithDatabase();
