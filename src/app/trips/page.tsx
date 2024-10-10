@@ -16,11 +16,11 @@ const Page = async () => {
     try {
       const token = await getToken({ template: "lakbai-supabase" });
 
-      if (!token) {
+      if (!token || !userId) {
         console.error("No token received from Clerk.");
         return null;
       }
-      const trips = await getItineraries({ token });
+      const trips = await getItineraries({ userId, token });
       return trips;
     } catch (error) {
       console.error("Error fetching token or itineraries:", error);

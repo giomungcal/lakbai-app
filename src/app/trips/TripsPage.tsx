@@ -89,7 +89,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
       return;
     }
 
-    const updatedItineraries = await getItineraries({ token });
+    const updatedItineraries = await getItineraries({ userId, token });
     setTrips(updatedItineraries);
   }
 

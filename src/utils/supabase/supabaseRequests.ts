@@ -12,20 +12,43 @@ interface AddItinerary {
   token: string;
 }
 
-export const getItineraries = async ({ token }: { token: string }) => {
-  const supabase = await supabaseClient(token);
-  const { data: itineraries, error } = await supabase
-    .from("itineraries")
-    .select("*");
+// Itinerary Requests
 
-  if (error) {
-    console.error(
-      "There has been an error fetching the data from Supabase: ",
-      error.message
-    );
-    return;
+export const getItineraries = async ({
+  userId,
+  token,
+}: {
+  userId: string;
+  token: string;
+}) => {
+  const supabase = await supabaseClient(token);
+
+  // Fetch all the itineraries where user has edit/view access
+  const { data: userRoles, error: rolesError } = await supabase
+    .from("user_roles")
+    .select("itinerary_id")
+    .eq("user_id", userId);
+
+  if (rolesError) {
+    console.error("Error fetching user roles:", rolesError);
+  } else {
+    const itineraryIds = userRoles.map((data) => data.itinerary_id);
+
+    // Fetch itineraries that user owns or has edit/view access to
+    const { data: itineraries, error } = await supabase
+      .from("itineraries")
+      .select("*")
+      .or(`owner_id.eq.${userId},id.in.(${itineraryIds.join(",")})`);
+
+    if (error) {
+      console.error(
+        "There has been an error fetching the data from Supabase: ",
+        error.message
+      );
+      return;
+    }
+    return itineraries;
   }
-  return itineraries;
 };
 
 export const addItinerary = async ({
@@ -67,4 +90,20 @@ export const addItinerary = async ({
   }
 
   return data;
+};
+
+// Activity Requests
+
+export const getActivities = async ({ token, id }) => {
+  const supabase = await supabaseClient(token);
+  const { data: activities, error } = await supabase
+    .from("activities")
+    .select("*")
+    .eq("itinerary_id", id);
+
+  if (!error) {
+    console.log(activities);
+  } else {
+    console.log(error.message);
+  }
 };

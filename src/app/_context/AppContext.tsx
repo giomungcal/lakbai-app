@@ -54,10 +54,6 @@ export const TripsContextProvider = ({
   const [itineraryDetails, setItineraryDetails] =
     useState<ItineraryDetails>(defaultItinerary);
 
-  useEffect(() => {
-    console.log(itineraryDetails);
-  }, [itineraryDetails]);
-
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
 
