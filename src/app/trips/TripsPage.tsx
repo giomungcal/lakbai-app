@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { supabaseClient } from "@/utils/supabase/supabaseClient";
 import { getItineraries } from "@/utils/supabase/supabaseRequests";
@@ -78,6 +79,10 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
     if (isResultSuccessful) setOpenTripDetails(false);
 
     // Since Realtime doesn't like to work atm, we will get the updated trips from the DB and re-render it
+    syncTripsWithDatabase();
+  }
+
+  async function syncTripsWithDatabase() {
     const token = await getToken({ template: "lakbai-supabase" });
     if (!token) {
       console.error("No token received from Clerk");
@@ -88,32 +93,38 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
     setTrips(updatedItineraries);
   }
 
-  // const { getToken } = useAuth();
-  // useEffect(() => {
-  //   const subscribeToRealtime = async () => {
-  //     const supabaseToken = await getToken({ template: "lakbai-supabase" });
-  //     const supabase = await supabaseClient(supabaseToken);
-  //     const channel = supabase
-  //       .channel("custom-all-channel")
-  //       .on(
-  //         "postgres_changes",
-  //         {
-  //           event: "*",
-  //           schema: "public",
-  //           table: "itineraries",
-  //         },
-  //         (payload) => {
-  //           console.log("INSERT event received!", payload);
-  //         }
-  //       )
-  //       .subscribe();
+  useEffect(() => {
+    const subscribeToRealtime = async () => {
+      const supabaseToken = await getToken({ template: "lakbai-supabase" });
+      const supabase = await supabaseClient(supabaseToken);
+      const channel = supabase
+        .channel("custom-all-channel")
+        .on(
+          "postgres_changes",
+          {
+            event: "DELETE",
+            schema: "public",
+            table: "itineraries",
+          },
+          (payload) => {
+            if (trips?.some((t) => t.id === payload.old.id)) {
+              toast({
+                title: "A trip has been deleted.",
+                description: `Trip ID: ${payload.old.id} has been deleted.`,
+                variant: "default",
+              });
+              syncTripsWithDatabase();
+            }
+          }
+        )
+        .subscribe();
 
-  //     return () => {
-  //       supabase.removeChannel(channel);
-  //     };
-  //   };
-  //   subscribeToRealtime();
-  // }, []);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+    subscribeToRealtime();
+  }, []);
 
   return (
     <div className="flex justify-center w-full min-h-screen ">
@@ -200,6 +211,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
               trips.map(
                 (
                   {
+                    id,
                     emoji,
                     name,
                     address,
@@ -246,7 +258,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                           📆 {dateStart} to {dateEnd}
                         </p>
                         <Link
-                          href="/"
+                          href={`/trips/itinerary?id=${id}`}
                           className={buttonVariants({
                             size: "lg",
                             variant: "default",
