@@ -51,6 +51,31 @@ export const getItineraries = async ({
   }
 };
 
+export const getSpecificItinerary = async ({
+  itineraryId,
+  token,
+}: {
+  itineraryId: string;
+  token?: string;
+}) => {
+  const supabase = await supabaseClient(token);
+
+  // Fetch all the itineraries where user has edit/view access
+  const { data: itineraries, error } = await supabase
+    .from("itineraries")
+    .select("*")
+    .eq("id", itineraryId);
+
+  if (error) {
+    console.error(
+      "There has been an error fetching the data from Supabase: ",
+      error.message
+    );
+    return;
+  }
+  return itineraries;
+};
+
 export const addItinerary = async ({
   userId,
   itineraryDetails,

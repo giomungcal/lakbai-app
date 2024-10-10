@@ -1,22 +1,26 @@
-import { getActivities } from "@/utils/supabase/supabaseRequests";
+import {
+  getActivities,
+  getSpecificItinerary,
+} from "@/utils/supabase/supabaseRequests";
 import { auth } from "@clerk/nextjs/server";
 
 interface PageProps {
   searchParams: {
-    [key: string]: string | string[] | undefined;
+    [key: string]: string | undefined;
   };
 }
 
 const Page = async ({ searchParams }: PageProps) => {
-  const { id } = searchParams;
+  const { id: itineraryId } = searchParams;
   const { userId, getToken } = auth();
 
   async function fetchItineraries() {
     if (!userId) {
-      const itineraries = await fetchItineraries();
+      const itineraries = await getSpecificItinerary({ itineraryId });
       return itineraries;
     } else {
-      const itineraries = await fetchItineraries();
+      const token = await getToken({ template: "lakbai-supabase" });
+      const itineraries = await getSpecificItinerary({ itineraryId, token });
     }
   }
 

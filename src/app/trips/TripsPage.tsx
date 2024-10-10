@@ -95,7 +95,9 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
 
   useEffect(() => {
     const subscribeToRealtime = async () => {
-      const supabaseToken = await getToken({ template: "lakbai-supabase" });
+      const supabaseToken = await getToken({
+        template: "lakbai-supabase-realtime",
+      });
       const supabase = await supabaseClient(supabaseToken);
       supabase.realtime.setAuth(supabaseToken);
 
