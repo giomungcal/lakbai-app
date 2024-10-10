@@ -1,8 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
+import { Database } from "../../../database.types";
 
 // Create a custom supabase client that injects the Clerk Supabase token into the request headers
-export const supabaseClient = async (supabaseToken) => {
-  const supabase = createClient(
+export const supabaseClient = async (supabaseToken: string) => {
+  const supabase = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {

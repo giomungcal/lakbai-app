@@ -3,7 +3,7 @@
 import { getItineraries } from "@/utils/supabase/supabaseRequests";
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
-import DashboardPage from "./DashboardPage";
+import TripsPage from "./TripsPage";
 
 const Page = async () => {
   const { userId, getToken } = auth();
@@ -30,7 +30,7 @@ const Page = async () => {
 
   const trips = await fetchItineraries();
 
-  return <DashboardPage userId={userId} serverTrips={trips ?? []} />;
+  return <TripsPage userId={userId} serverTrips={trips ?? []} />;
 };
 
 export default Page;

@@ -14,7 +14,7 @@ import { usePathname } from "next/navigation";
 const Navbar = () => {
   const path = usePathname();
 
-  const isDashboard = path === "/dashboard";
+  const isTripsPage = path === "/trips";
 
   return (
     <header className=" h-14 z-[100] inset-x-0 top-0 w-full border-b border-gray-200 bg-white/75 backdrop-blur-lg transition-all">
@@ -30,12 +30,12 @@ const Navbar = () => {
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              {!isDashboard && (
+              {!isTripsPage && (
                 <Link
-                  href={"/dashboard"}
+                  href={"/trips"}
                   className={buttonVariants({ variant: "default" })}
                 >
-                  Dashboard
+                  Trips
                 </Link>
               )}
               <SignOutButton>

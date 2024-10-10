@@ -25,6 +25,11 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -33,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { supabaseClient } from "@/utils/supabase/supabaseClient";
+import { getItineraries } from "@/utils/supabase/supabaseRequests";
 import {
   EMOJIS,
   EmojiValue,
@@ -41,75 +47,73 @@ import {
 } from "@/validators/options";
 import { useAuth } from "@clerk/nextjs";
 import { Label } from "@radix-ui/react-label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@radix-ui/react-popover";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import { useMediaQuery } from "usehooks-ts";
+import { Database } from "../../../database.types";
 import { useTripsContext } from "../_context/AppContext";
 
-interface DashboardPage {
+interface TripsPage {
   userId?: string;
   serverTrips?: TripsProps[];
 }
 
-type TripsProps = {
-  emoji: string;
-  id: string;
-  name: string;
-  address: string;
-  start_date: string;
-  end_date: string;
-  num_of_people: string;
-  is_created_by_lakbai: boolean;
-  owner_id: string;
-  created_at: string;
-};
+type TripsProps = Database["public"]["Tables"]["itineraries"]["Row"];
 
-const DashboardPage = ({ userId, serverTrips }: DashboardPage) => {
+const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
+  const { getToken } = useAuth();
 
   const [trips, setTrips] = useState(serverTrips);
   const [openTripDetails, setOpenTripDetails] = useState(false);
   const { addTrip } = useTripsContext();
 
   async function handleTripSave() {
-    await addTrip();
-    setOpenTripDetails(false);
+    // Add the trip to database
+    const isResultSuccessful = await addTrip();
+
+    if (isResultSuccessful) setOpenTripDetails(false);
+
+    // Since Realtime doesn't like to work atm, we will get the updated trips from the DB and re-render it
+    const token = await getToken({ template: "lakbai-supabase" });
+    if (!token) {
+      console.error("No token received from Clerk");
+      return;
+    }
+
+    const updatedItineraries = await getItineraries({ token });
+    setTrips(updatedItineraries);
   }
-  const { getToken } = useAuth();
 
-  useEffect(() => {
-    const subscribeToRealtime = async () => {
-      const supabaseToken = await getToken({ template: "lakbai-supabase" });
-      const supabase = await supabaseClient(supabaseToken);
-      const channel = supabase
-        .channel("custom-all-channel")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "itineraries",
-          },
-          (payload) => {
-            console.log("INSERT event received!", payload);
-          }
-        )
-        .subscribe();
+  // const { getToken } = useAuth();
+  // useEffect(() => {
+  //   const subscribeToRealtime = async () => {
+  //     const supabaseToken = await getToken({ template: "lakbai-supabase" });
+  //     const supabase = await supabaseClient(supabaseToken);
+  //     const channel = supabase
+  //       .channel("custom-all-channel")
+  //       .on(
+  //         "postgres_changes",
+  //         {
+  //           event: "*",
+  //           schema: "public",
+  //           table: "itineraries",
+  //         },
+  //         (payload) => {
+  //           console.log("INSERT event received!", payload);
+  //         }
+  //       )
+  //       .subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    };
-    subscribeToRealtime();
-  }, []);
+  //     return () => {
+  //       supabase.removeChannel(channel);
+  //     };
+  //   };
+  //   subscribeToRealtime();
+  // }, []);
 
   return (
     <div className="flex justify-center w-full min-h-screen ">
@@ -273,21 +277,17 @@ const DashboardPage = ({ userId, serverTrips }: DashboardPage) => {
   );
 };
 
-export default DashboardPage;
+export default TripsPage;
 
 function AddTripForm({ className }: { className: string }) {
   const {
-    emoji,
-    setEmoji,
-    setName,
-    setAddress,
     startDate,
     setStartDate,
     setEndDate,
     endDate,
-    numOfPeople,
-    setNumOfPeople,
-    addTrip,
+
+    itineraryDetails,
+    setItineraryDetails,
   } = useTripsContext();
 
   return (
@@ -297,8 +297,12 @@ function AddTripForm({ className }: { className: string }) {
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="name">Emoji</Label>
             <Select
-              defaultValue={emoji}
-              onValueChange={(value: EmojiValue) => setEmoji(value)}
+              defaultValue={itineraryDetails.emoji}
+              onValueChange={(value: EmojiValue) =>
+                setItineraryDetails((prev) => {
+                  return { ...prev, emoji: value };
+                })
+              }
             >
               <SelectTrigger id="framework">
                 <SelectValue placeholder="00" />
@@ -318,7 +322,11 @@ function AddTripForm({ className }: { className: string }) {
               id="name"
               maxLength={25}
               placeholder="Trip description"
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) =>
+                setItineraryDetails((prev) => {
+                  return { ...prev, name: e.target.value };
+                })
+              }
             />
           </div>
         </div>
@@ -328,7 +336,10 @@ function AddTripForm({ className }: { className: string }) {
           <GooglePlacesAutocomplete
             apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
             selectProps={{
-              onChange: (value) => setAddress(value!.label),
+              onChange: (value) =>
+                setItineraryDetails((prev) => {
+                  return { ...prev, address: value!.label };
+                }),
             }}
           />
         </div>
@@ -355,7 +366,13 @@ function AddTripForm({ className }: { className: string }) {
               <Calendar
                 mode="single"
                 selected={startDate}
-                onSelect={(value) => value && setStartDate(value)}
+                onSelect={(value: Date) => {
+                  setStartDate(value);
+                  setItineraryDetails((prev) => ({
+                    ...prev,
+                    end_date: value.toISOString(),
+                  }));
+                }}
                 initialFocus
               />
             </PopoverContent>
@@ -381,7 +398,13 @@ function AddTripForm({ className }: { className: string }) {
               <Calendar
                 mode="single"
                 selected={endDate}
-                onSelect={(value) => value && setEndDate(value)}
+                onSelect={(value: Date) => {
+                  setEndDate(value);
+                  setItineraryDetails((prev) => ({
+                    ...prev,
+                    start_date: value.toISOString(),
+                  }));
+                }}
                 initialFocus
               />
             </PopoverContent>
@@ -392,9 +415,9 @@ function AddTripForm({ className }: { className: string }) {
           <Label htmlFor="framework">Number of Travelers</Label>
 
           <Select
-            defaultValue={numOfPeople}
+            defaultValue={itineraryDetails.num_of_people}
             onValueChange={(value: NumberOfPeopleValue) =>
-              setNumOfPeople(value)
+              setItineraryDetails((prev) => ({ ...prev, num_of_people: value }))
             }
           >
             <SelectTrigger id="framework">

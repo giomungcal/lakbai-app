@@ -1,16 +1,8 @@
 "use client";
 
 import { toast } from "@/hooks/use-toast";
-import { createClient } from "@/utils/supabase/client";
-import { supabaseClient } from "@/utils/supabase/supabaseClient";
 import { addItinerary } from "@/utils/supabase/supabaseRequests";
-import {
-  EMOJIS,
-  EmojiValue,
-  ItineraryDetailsProps,
-  NUMBER_OF_PEOPLE,
-  NumberOfPeopleValue,
-} from "@/validators/options";
+import { EMOJIS, NUMBER_OF_PEOPLE } from "@/validators/options";
 import { useAuth } from "@clerk/nextjs";
 import {
   createContext,
@@ -18,28 +10,39 @@ import {
   ReactNode,
   SetStateAction,
   useContext,
+  useEffect,
   useState,
 } from "react";
+import { Database } from "../../../database.types";
 
 interface TripsContext {
-  name?: string;
-  setName: Dispatch<SetStateAction<string | null>>;
-  address?: string;
-  setAddress: Dispatch<SetStateAction<string | null>>;
-  emoji: EmojiValue;
-  setEmoji: Dispatch<SetStateAction<EmojiValue>>;
   startDate: Date;
   setStartDate: Dispatch<SetStateAction<Date>>;
   endDate: Date;
   setEndDate: Dispatch<SetStateAction<Date>>;
-  numOfPeople: NumberOfPeopleValue;
-  setNumOfPeople: Dispatch<SetStateAction<NumberOfPeopleValue>>;
-  addTrip: () => void;
+
+  addTrip: () => boolean;
+  itineraryDetails: ItineraryDetails;
+  setItineraryDetails: Dispatch<SetStateAction<ItineraryDetails>>;
 }
 
 interface TripsContextProviderProps {
   children: ReactNode;
 }
+
+type ItineraryDetails = Database["public"]["Tables"]["itineraries"]["Insert"];
+
+const defaultItinerary: ItineraryDetails = {
+  address: "",
+  emoji: EMOJIS[0]["value"],
+  end_date: new Date().toISOString(),
+  id: "",
+  is_created_by_lakbai: false,
+  name: "",
+  num_of_people: NUMBER_OF_PEOPLE[1]["value"],
+  owner_id: "",
+  start_date: new Date().toISOString(),
+};
 
 const TripsContext = createContext<TripsContext | null>(null);
 
@@ -48,51 +51,55 @@ export const TripsContextProvider = ({
 }: TripsContextProviderProps) => {
   const { userId, getToken } = useAuth();
 
-  const [name, setName] = useState<string | null>(null);
-  const [address, setAddress] = useState<string | null>(null);
-  const [emoji, setEmoji] = useState<EmojiValue>(EMOJIS[0]["value"]);
+  const [itineraryDetails, setItineraryDetails] =
+    useState<ItineraryDetails>(defaultItinerary);
+
+  useEffect(() => {
+    console.log(itineraryDetails);
+  }, [itineraryDetails]);
+
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
-  const [numOfPeople, setNumOfPeople] = useState<NumberOfPeopleValue>(
-    NUMBER_OF_PEOPLE[0]["value"]
-  );
 
   function validationForm() {
-    const validationErrors: string[] = [];
+    let areDetailsComplete = false;
 
-    if (!name) validationErrors.push("Name is required.");
-    if (!address) validationErrors.push("Address is required.");
-    if (!emoji) validationErrors.push("Emoji selection is required.");
-    if (!startDate) validationErrors.push("Start date is required.");
-    if (!endDate) validationErrors.push("End date is required.");
-    if (!numOfPeople) validationErrors.push("Number of people is required.");
+    const { name, address, emoji, start_date, end_date, num_of_people } =
+      itineraryDetails;
 
-    return validationErrors.length === 0;
+    if (
+      !name ||
+      !address ||
+      !emoji ||
+      !start_date ||
+      !end_date ||
+      !num_of_people
+    ) {
+      areDetailsComplete = false;
+    } else {
+      areDetailsComplete = true;
+    }
+    console.log(areDetailsComplete);
+
+    return areDetailsComplete;
   }
 
   function resetValues() {
-    setName(null);
-    setAddress(null);
-    setEmoji(EMOJIS[0]["value"]);
+    setItineraryDetails(defaultItinerary);
     setStartDate(new Date());
     setEndDate(new Date());
-    setNumOfPeople(NUMBER_OF_PEOPLE[0]["value"]);
   }
 
   async function addTrip() {
     if (validationForm() && userId) {
-      const itineraryDetails: ItineraryDetailsProps = {
-        name,
-        address,
-        emoji,
-        startDate,
-        endDate,
-        numOfPeople,
-      };
       const token = await getToken({ template: "lakbai-supabase" });
 
       if (token) {
-        const itinerary = await addItinerary(userId, itineraryDetails, token);
+        const itinerary = await addItinerary({
+          userId,
+          itineraryDetails,
+          token,
+        });
         resetValues();
         if (itinerary) {
           toast({
@@ -101,12 +108,14 @@ export const TripsContextProvider = ({
             variant: "default",
           });
         }
+        return true;
       } else {
         toast({
           title: "Token Error",
           description: "There has been an error getting a token from Clerk",
           variant: "destructive",
         });
+        return false;
       }
     } else {
       toast({
@@ -114,23 +123,21 @@ export const TripsContextProvider = ({
         description: "Please fill in all required fields before submitting.",
         variant: "destructive",
       });
+      return false;
     }
   }
 
   return (
     <TripsContext.Provider
       value={{
-        setName,
-        setAddress,
-        emoji,
-        setEmoji,
         startDate,
         setStartDate,
         endDate,
         setEndDate,
-        numOfPeople,
-        setNumOfPeople,
+
         addTrip,
+        itineraryDetails,
+        setItineraryDetails,
       }}
     >
       {children}
