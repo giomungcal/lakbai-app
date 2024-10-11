@@ -21,6 +21,8 @@ export const getItineraries = async ({
   userId: string;
   token: string;
 }) => {
+  const supabase = await supabaseClient(token);
+
   // Fetch all the itineraries where user has edit/view access
   const { data: userRoles, error: rolesError } = await supabase
     .from("user_roles")

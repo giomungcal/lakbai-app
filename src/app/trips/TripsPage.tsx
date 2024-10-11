@@ -118,24 +118,24 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
             }
           }
         )
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "itineraries",
-          },
-          (payload) => {
-            if (trips?.some((t) => t.owner_id === payload.new.owner_id)) {
-              toast({
-                title: "A new trip has been added.",
-                description: `Trip: ${payload.new.name} has been added.`,
-                variant: "default",
-              });
-              syncTripsWithDatabase();
-            }
-          }
-        )
+        // .on(
+        //   "postgres_changes",
+        //   {
+        //     event: "INSERT",
+        //     schema: "public",
+        //     table: "itineraries",
+        //   },
+        //   (payload) => {
+        //     if (trips?.some((t) => t.owner_id === payload.new.owner_id)) {
+        //       toast({
+        //         title: "A new trip has been added.",
+        //         description: `Trip: ${payload.new.name} has been added.`,
+        //         variant: "default",
+        //       });
+        //       syncTripsWithDatabase();
+        //     }
+        //   }
+        // )
         .subscribe();
 
       return () => {
@@ -146,20 +146,24 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
     subscribeToRealtime();
   }, []);
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      toast({
-        title: "Refresh page to get latest collaboration updates.",
-        variant: "default",
-      });
-    }, 25000);
+  // Notify user when realtime subscription token expires. Refresh needed for collab updates.
+  // useEffect(() => {
+  //   const timeoutId = setTimeout(() => {
+  //     toast({
+  //       title: "Refresh page to get latest collaboration updates.",
+  //       variant: "default",
+  //     });
+  //   }, 60000);
 
-    return () => clearTimeout(timeoutId);
-  }, []);
+  //   return () => clearTimeout(timeoutId);
+  // }, []);
 
   async function handleTripSave() {
     const isResultSuccessful = await addTrip();
     if (isResultSuccessful) setOpenTripDetails(false);
+
+    // Update list when a new trip is added
+    syncTripsWithDatabase();
   }
 
   async function syncTripsWithDatabase() {
