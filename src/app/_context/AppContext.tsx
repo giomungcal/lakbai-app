@@ -21,7 +21,7 @@ interface TripsContext {
   endDate: Date;
   setEndDate: Dispatch<SetStateAction<Date>>;
 
-  addTrip: () => boolean;
+  addTrip: () => Promise<boolean>;
   itineraryDetails: ItineraryDetails;
   setItineraryDetails: Dispatch<SetStateAction<ItineraryDetails>>;
 }

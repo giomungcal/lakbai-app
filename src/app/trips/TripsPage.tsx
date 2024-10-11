@@ -76,7 +76,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   useEffect(() => {
     const subscribeToRealtime = async () => {
       const supabaseToken = await getToken({
-        template: "lakbai-supabase-realtime",
+        template: "lakbai-supabase",
       });
       const supabase = await supabaseClient(supabaseToken);
       supabase.realtime.setAuth(supabaseToken);
@@ -118,24 +118,6 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
             }
           }
         )
-        // .on(
-        //   "postgres_changes",
-        //   {
-        //     event: "INSERT",
-        //     schema: "public",
-        //     table: "itineraries",
-        //   },
-        //   (payload) => {
-        //     if (trips?.some((t) => t.owner_id === payload.new.owner_id)) {
-        //       toast({
-        //         title: "A new trip has been added.",
-        //         description: `Trip: ${payload.new.name} has been added.`,
-        //         variant: "default",
-        //       });
-        //       syncTripsWithDatabase();
-        //     }
-        //   }
-        // )
         .subscribe();
 
       return () => {
@@ -144,7 +126,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
     };
 
     subscribeToRealtime();
-  }, []);
+  }, [trips]);
 
   // Notify user when realtime subscription token expires. Refresh needed for collab updates.
   // useEffect(() => {
@@ -268,6 +250,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                     start_date: dateStart,
                     end_date: dateEnd,
                     num_of_people: number,
+                    owner_id,
                   },
                   index
                 ) => {

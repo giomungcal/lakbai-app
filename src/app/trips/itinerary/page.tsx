@@ -1,8 +1,10 @@
 import {
   getActivities,
+  getSpecificActivity,
   getSpecificItinerary,
 } from "@/utils/supabase/supabaseRequests";
 import { auth } from "@clerk/nextjs/server";
+import { Database } from "../../../../database.types";
 
 interface PageProps {
   searchParams: {
@@ -10,53 +12,49 @@ interface PageProps {
   };
 }
 
+type Itineraries = Database["public"]["Tables"]["itineraries"]["Row"];
+
 const Page = async ({ searchParams }: PageProps) => {
   const { id: itineraryId } = searchParams;
   const { userId, getToken } = auth();
 
-  async function fetchItineraries() {
+  async function fetchTripData() {
     if (!userId) {
-      const itineraries = await getSpecificItinerary({ itineraryId });
-      return itineraries;
+      const itinerary = await getSpecificItinerary({ itineraryId });
+      const activities = await getSpecificActivity({ itineraryId });
+
+      //   itineraries.length !== 0
+      //     ? console.log("User is able to see it because its Public!!")
+      //     : console.log("Trip is PRIVATE!");
+
+      return { itinerary, activities };
     } else {
       const token = await getToken({ template: "lakbai-supabase" });
-      const itineraries = await getSpecificItinerary({ itineraryId, token });
-    }
-  }
+      const itinerary = await getSpecificItinerary({ itineraryId, token });
 
-  fetchItineraries();
+      console.log("Authenticated: ", itinerary);
 
-  async function fetchActivities() {
-    try {
-      const token = await getToken({ template: "lakbai-supabase" });
-      if (!token) {
-        console.error("No token received from Clerk.");
-        return null;
+      let isOwner = false;
+
+      if (itinerary) {
+        const isOwner = itinerary.some((i) => i.owner_id === userId);
       }
-      const activities = await getActivities({ token, id });
-      return activities;
-    } catch (error) {
-      console.error("Error fetching token or itineraries:", error);
-      return null;
+
+      //   Check if Edit or View Privilege by fetching user roles
+      //   async function getUserRole() {
+      //     return "user";
+      //   }
+
+      return { itinerary, activities, isOwner, isEditor, isViewer };
     }
   }
 
-  async function getUserRole() {
-    return "user";
-  }
-
-  //   Check from itineraries if itinerary is 1. isPublic and 2. isUser the owner?
-  const isOwner = false;
-  const isPublic = false;
-
-  //   const [activities, userRole] = await Promise.all([
-  //     fetchActivities(),
-  //     getUserRole(),
-  //   ]);
+  const { itinerary, activities, isOwner, isEditor, isViewer } =
+    fetchTripData();
 
   //   const userPrivilege = id || "view";
 
-  return <div>{id}</div>;
+  return <div>{itineraryId}</div>;
 };
 
 export default Page;
