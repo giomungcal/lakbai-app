@@ -6,6 +6,7 @@ import { supabaseClient } from "./supabaseClient";
 
 type AddItineraryType = Database["public"]["Tables"]["itineraries"]["Insert"];
 type Itinerary = Database["public"]["Tables"]["itineraries"]["Row"];
+type Activities = Database["public"]["Tables"]["activities"]["Row"];
 
 interface AddItinerary {
   userId: string;
@@ -14,6 +15,7 @@ interface AddItinerary {
 }
 
 type ItineraryType = Itinerary[];
+type ActivitiesType = Activities[];
 
 // Itinerary Requests
 
@@ -59,7 +61,7 @@ export const getSpecificItinerary = async ({
   token,
 }: {
   itineraryId: string | undefined;
-  token?: string;
+  token?: string | null;
 }): Promise<ItineraryType | undefined> => {
   const supabase = await supabaseClient(token);
 
@@ -69,7 +71,7 @@ export const getSpecificItinerary = async ({
     .select("*")
     .eq("id", itineraryId);
 
-  console.log(itineraries);
+  // console.log(itineraries);
 
   if (error) {
     console.error(
@@ -87,8 +89,8 @@ export const getSpecificActivity = async ({
   token,
 }: {
   itineraryId: string | undefined;
-  token?: string;
-}) => {
+  token?: string | null;
+}): Promise<ActivitiesType | undefined> => {
   const supabase = await supabaseClient(token);
 
   // Will return error if itinerary is not public

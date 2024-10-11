@@ -12,6 +12,8 @@ interface PageProps {
   };
 }
 
+type UserRole = "view" | "edit" | "owner";
+
 type Itineraries = Database["public"]["Tables"]["itineraries"]["Row"];
 
 const Page = async ({ searchParams }: PageProps) => {
@@ -23,6 +25,8 @@ const Page = async ({ searchParams }: PageProps) => {
       const itinerary = await getSpecificItinerary({ itineraryId });
       const activities = await getSpecificActivity({ itineraryId });
 
+      console.log(activities);
+
       //   itineraries.length !== 0
       //     ? console.log("User is able to see it because its Public!!")
       //     : console.log("Trip is PRIVATE!");
@@ -31,13 +35,19 @@ const Page = async ({ searchParams }: PageProps) => {
     } else {
       const token = await getToken({ template: "lakbai-supabase" });
       const itinerary = await getSpecificItinerary({ itineraryId, token });
+      const activities = await getSpecificActivity({ itineraryId, token });
 
-      console.log("Authenticated: ", itinerary);
+      //   itinerary?.map((i) => console.log("Auth User Trip: ", i.name));
 
-      let isOwner = false;
+      // To identify if the User is the owner of the itinerary
+      let userRole: UserRole = "view";
 
       if (itinerary) {
         const isOwner = itinerary.some((i) => i.owner_id === userId);
+        if (isOwner) {
+          userRole = "owner";
+        }
+        console.log("Is User the owner of this Itinerary: ", isOwner);
       }
 
       //   Check if Edit or View Privilege by fetching user roles
