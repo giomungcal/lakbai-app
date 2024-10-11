@@ -1,5 +1,6 @@
 import { toast } from "@/hooks/use-toast";
 import { EMOJIS } from "@/validators/options";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
 import { Database } from "../../../database.types";
 import { supabaseClient } from "./supabaseClient";
@@ -7,6 +8,7 @@ import { supabaseClient } from "./supabaseClient";
 type AddItineraryType = Database["public"]["Tables"]["itineraries"]["Insert"];
 type Itinerary = Database["public"]["Tables"]["itineraries"]["Row"];
 type Activities = Database["public"]["Tables"]["activities"]["Row"];
+type UserRoles = Database["public"]["Tables"]["user_roles"]["Row"];
 
 interface AddItinerary {
   userId: string;
@@ -14,8 +16,44 @@ interface AddItinerary {
   token: string;
 }
 
+interface GetSpecific {
+  itineraryId: string | undefined;
+  token?: string | null;
+}
+
+interface GetUserRoles {
+  userId: string;
+  token: string | null;
+  supabase?: SupabaseClient;
+}
+
 type ItineraryType = Itinerary[];
 type ActivitiesType = Activities[];
+
+// User Roles Fetching
+// Gets all the entries where userId has wither "view" or "edit" access
+
+export const getUserRoles = async ({
+  userId,
+  token,
+  supabase,
+}: GetUserRoles): Promise<UserRoles[] | undefined> => {
+  if (!supabase) {
+    supabase = await supabaseClient(token);
+  }
+
+  const { data: userRoles, error: rolesError } = await supabase
+    .from("user_roles")
+    .select("*")
+    .eq("user_id", userId);
+
+  if (rolesError) {
+    console.error("Error fetching user roles:", rolesError);
+    return;
+  }
+
+  return userRoles;
+};
 
 // Itinerary Requests
 
@@ -28,41 +66,35 @@ export const getItineraries = async ({
 }) => {
   const supabase = await supabaseClient(token);
 
-  // Fetch all the itineraries where user has edit/view access
-  const { data: userRoles, error: rolesError } = await supabase
-    .from("user_roles")
-    .select("itinerary_id")
-    .eq("user_id", userId);
+  // Fetch user roles first
+  const userRoles = await getUserRoles({ userId, token, supabase });
 
-  if (rolesError) {
-    console.error("Error fetching user roles:", rolesError);
-  } else {
-    const itineraryIds = userRoles.map((data) => data.itinerary_id);
+  let itineraryIds: string[] = [];
 
-    // Fetch itineraries that user owns or has edit/view access to
-    const { data: itineraries, error } = await supabase
-      .from("itineraries")
-      .select("*")
-      .or(`owner_id.eq.${userId},id.in.(${itineraryIds.join(",")})`);
-
-    if (error) {
-      console.error(
-        "There has been an error fetching the data from Supabase: ",
-        error.message
-      );
-      return;
-    }
-    return itineraries;
+  if (userRoles) {
+    itineraryIds = userRoles.map((data) => data.itinerary_id);
   }
+
+  // Fetch itineraries that user owns or has edit/view access to
+  const { data: itineraries, error } = await supabase
+    .from("itineraries")
+    .select("*")
+    .or(`owner_id.eq.${userId},id.in.(${itineraryIds.join(",")})`);
+
+  if (error) {
+    console.error(
+      "There has been an error fetching the data from Supabase: ",
+      error.message
+    );
+    return;
+  }
+  return itineraries;
 };
 
 export const getSpecificItinerary = async ({
   itineraryId,
   token,
-}: {
-  itineraryId: string | undefined;
-  token?: string | null;
-}): Promise<ItineraryType | undefined> => {
+}: GetSpecific): Promise<ItineraryType | undefined> => {
   const supabase = await supabaseClient(token);
 
   // Will return error if itinerary is not public
@@ -70,8 +102,6 @@ export const getSpecificItinerary = async ({
     .from("itineraries")
     .select("*")
     .eq("id", itineraryId);
-
-  // console.log(itineraries);
 
   if (error) {
     console.error(
@@ -87,10 +117,7 @@ export const getSpecificItinerary = async ({
 export const getSpecificActivity = async ({
   itineraryId,
   token,
-}: {
-  itineraryId: string | undefined;
-  token?: string | null;
-}): Promise<ActivitiesType | undefined> => {
+}: GetSpecific): Promise<ActivitiesType | undefined> => {
   const supabase = await supabaseClient(token);
 
   // Will return error if itinerary is not public
@@ -98,8 +125,6 @@ export const getSpecificActivity = async ({
     .from("activities")
     .select("*")
     .eq("itinerary_id", itineraryId);
-
-  console.log(activities);
 
   if (error) {
     console.error(
@@ -151,20 +176,4 @@ export const addItinerary = async ({
   }
 
   return data;
-};
-
-// Activity Requests
-
-export const getActivities = async ({ token, id }) => {
-  const supabase = await supabaseClient(token);
-  const { data: activities, error } = await supabase
-    .from("activities")
-    .select("*")
-    .eq("itinerary_id", id);
-
-  if (!error) {
-    console.log(activities);
-  } else {
-    console.log(error.message);
-  }
 };

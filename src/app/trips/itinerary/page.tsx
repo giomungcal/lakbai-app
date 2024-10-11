@@ -1,7 +1,7 @@
 import {
-  getActivities,
   getSpecificActivity,
   getSpecificItinerary,
+  getUserRoles,
 } from "@/utils/supabase/supabaseRequests";
 import { auth } from "@clerk/nextjs/server";
 import { Database } from "../../../../database.types";
@@ -24,8 +24,6 @@ const Page = async ({ searchParams }: PageProps) => {
     if (!userId) {
       const itinerary = await getSpecificItinerary({ itineraryId });
       const activities = await getSpecificActivity({ itineraryId });
-
-      console.log(activities);
 
       //   itineraries.length !== 0
       //     ? console.log("User is able to see it because its Public!!")
@@ -51,6 +49,9 @@ const Page = async ({ searchParams }: PageProps) => {
       }
 
       //   Check if Edit or View Privilege by fetching user roles
+
+      const userRoles = await getUserRoles({ userId, token });
+
       //   async function getUserRole() {
       //     return "user";
       //   }
