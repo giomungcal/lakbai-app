@@ -39,7 +39,12 @@ const Navbar = () => {
                 </Link>
               )}
               <SignOutButton>
-                <Button variant="secondary">Logout</Button>
+                <Link
+                  href="/"
+                  className={buttonVariants({ variant: "secondary" })}
+                >
+                  Logout
+                </Link>
               </SignOutButton>
             </SignedIn>
           </div>

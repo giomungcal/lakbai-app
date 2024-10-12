@@ -9,6 +9,7 @@ const Page = async () => {
   const { userId, getToken } = auth();
 
   if (!userId) {
+    // TO DO: Modify the 404 page for this screen
     return notFound();
   }
 

@@ -10,7 +10,6 @@ import {
   ReactNode,
   SetStateAction,
   useContext,
-  useEffect,
   useState,
 } from "react";
 import { Database } from "../../../database.types";

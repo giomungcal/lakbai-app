@@ -5,6 +5,7 @@ import {
 } from "@/utils/supabase/supabaseRequests";
 import { auth } from "@clerk/nextjs/server";
 import { Database } from "../../../../database.types";
+import ItineraryPage from "./ItineraryPage";
 
 interface PageProps {
   searchParams: {
@@ -12,14 +13,13 @@ interface PageProps {
   };
 }
 
-type UserRole = "view" | "edit" | "owner" | "none" | "public";
-
+type UserRole = "view" | "edit" | "owner" | "public" | "none";
 type Itineraries = Database["public"]["Tables"]["itineraries"]["Row"];
 type Activities = Database["public"]["Tables"]["activities"]["Row"];
 
-interface FetchTripData {
-  itinerary: Itineraries[] | undefined;
-  activities: Activities[] | undefined;
+export interface FetchTripData {
+  itinerary: Itineraries[] | null;
+  activities: Activities[] | null;
   userRole: UserRole;
 }
 
@@ -32,19 +32,20 @@ const Page = async ({ searchParams }: PageProps) => {
       const itinerary = await getSpecificItinerary({ itineraryId });
       const activities = await getSpecificActivity({ itineraryId });
 
-      //   itineraries.length !== 0
-      //     ? console.log("User is able to see it because its Public!!")
-      //     : console.log("Trip is PRIVATE!");
-
-      return { itinerary, activities, userRole: "public" };
+      return {
+        itinerary: itinerary ?? null,
+        activities: activities ?? null,
+        userRole: "public",
+      };
     } else {
       const token = await getToken({ template: "lakbai-supabase" });
+
       const itinerary = await getSpecificItinerary({ itineraryId, token });
       const activities = await getSpecificActivity({ itineraryId, token });
 
       //   itinerary?.map((i) => console.log("Auth User Trip: ", i.name));
 
-      // To identify if the User is the Owner of the itinerary
+      // Identify the User Role: owner, viewer, editor, anonymous
       let userRole: UserRole = "none";
 
       if (itinerary) {
@@ -53,7 +54,9 @@ const Page = async ({ searchParams }: PageProps) => {
 
         if (isOwner) {
           userRole = "owner";
-          console.log("Is User the owner of this Itinerary: ", isOwner);
+          // TO-DO: Fetch all users that have edit/view access in this itinerary
+          // - Create a new get function in supabaseRequests --> getItineraryAccessList
+          // Actually, on second thought, just fetch it when clicking the Share button on this page.
         } else if (isPublic) {
           userRole = "public";
         } else {
@@ -74,7 +77,11 @@ const Page = async ({ searchParams }: PageProps) => {
         }
       }
 
-      return { itinerary, activities, userRole };
+      return {
+        itinerary: itinerary ?? null,
+        activities: activities ?? null,
+        userRole,
+      };
     }
   }
 
@@ -86,9 +93,26 @@ const Page = async ({ searchParams }: PageProps) => {
 
   //   IF NO Itinerary, meaning does not exist, or inaccessible, reach out to user
 
-  //   const userPrivilege = id || "view";
+  // Error 404 Page
+  if (!itinerary || itinerary.length === 0) {
+    return (
+      <section className="h-full w-full flex flex-col justify-center items-center ">
+        <h1>I think you might be missing, let me lead you home.</h1>
+        <p>
+          The itinerary you are trying to view might not be set to public or
+          does not exist. Reach out to the owner.
+        </p>
+      </section>
+    );
+  }
 
-  return <div>{itineraryId}</div>;
+  return (
+    <ItineraryPage
+      activities={activities}
+      itinerary={itinerary}
+      userRole={userRole}
+    />
+  );
 };
 
 export default Page;

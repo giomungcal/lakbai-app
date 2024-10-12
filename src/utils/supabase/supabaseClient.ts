@@ -7,7 +7,6 @@ let lastToken: string | null = null;
 // Create a custom supabase client that injects the Clerk Supabase token into the request headers
 export const supabaseClient = async (supabaseToken?: string | null) => {
   if (supabaseToken === lastToken && cachedSupabaseClient !== null) {
-    console.log("Using cached supabase client!");
     return cachedSupabaseClient;
   }
 
