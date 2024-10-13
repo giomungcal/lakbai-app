@@ -264,7 +264,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                 return (
                   <div
                     key={index}
-                    className="relative flex flex-col justify-between h-52 bg-card border-border border-2 rounded-2xl p-5 hover:bg-secondary/20 transition-all"
+                    className="relative flex flex-col justify-between h-52 bg-secondary/30 border-border border-2 rounded-2xl p-5 hover:bg-secondary/20 transition-all"
                   >
                     <Link
                       className="absolute inset-0 z-10"

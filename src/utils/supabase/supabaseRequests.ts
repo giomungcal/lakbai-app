@@ -177,3 +177,47 @@ export const addItinerary = async ({
 
   return data;
 };
+
+interface UpdateDay {
+  token: string;
+  action: "add" | "delete";
+  day: number;
+  itineraryId: string;
+}
+
+export const updateDay = async ({ token, action, day, itineraryId }) => {
+  const supabase = await supabaseClient(token);
+
+  if (action === "add") {
+    const { data, error } = await supabase
+      .from("itineraries")
+      .update({ days_count: day })
+      .eq("id", itineraryId)
+      .select();
+    if (error) {
+      toast({
+        title: "Insertion Error. Try again later.",
+        description: `Failed to add new day: ${error.message}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    return data;
+  } else if (action === "delete") {
+    const { data, error } = await supabase
+      .from("itineraries")
+      .update({ days_count: day })
+      .eq("id", itineraryId)
+      .select();
+
+    if (error) {
+      toast({
+        title: "Insertion Error. Try again later.",
+        description: `Failed to remove latest day: ${error.message}`,
+        variant: "destructive",
+      });
+      return;
+    }
+    return data;
+  }
+};

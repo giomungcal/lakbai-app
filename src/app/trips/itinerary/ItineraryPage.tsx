@@ -72,12 +72,14 @@ import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { updateDay } from "@/utils/supabase/supabaseRequests";
 import {
   EMOJIS,
   MAX_DAYS,
   NUMBER_OF_PEOPLE,
   UserRole,
 } from "@/validators/options";
+import { useAuth } from "@clerk/nextjs";
 import { format } from "date-fns";
 import {
   Calendar as CalendarIcon,
@@ -86,9 +88,11 @@ import {
   EllipsisVertical,
   Info,
   Map,
+  Minus,
   Plus,
   Settings,
   Settings2,
+  SquarePen,
   Trash,
 } from "lucide-react";
 import Link from "next/link";
@@ -108,6 +112,7 @@ const ItineraryPage: FC<FetchTripData> = ({
   itinerary,
   userRole,
 }) => {
+  const { userId, getToken } = useAuth();
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const [itineraryDetails, setItineraryDetails] =
@@ -118,7 +123,9 @@ const ItineraryPage: FC<FetchTripData> = ({
     ({ value }) => value === itineraryDetails?.num_of_people
   );
 
-  const [openTripDetails, setOpenTripDetails] = useState(false);
+  //   Alert/Dialog/Modal Screen handling
+  const [openTripDetails, setOpenTripDetails] = useState<boolean>(false);
+  const [isAddActivityOpen, setIsAddActivityOpen] = useState<boolean>(false);
 
   const searchParams = useSearchParams();
   const [selectedDay, setSelectedDay] = useState<string | null>();
@@ -128,14 +135,12 @@ const ItineraryPage: FC<FetchTripData> = ({
 
   useEffect(() => {
     let dayParam = searchParams.get("day");
-
+    // Set selectedDay based on URL on mount
     if (
       dayParam &&
       Number(dayParam) <= MAX_DAYS &&
       Number(dayParam) <= (itineraryDetails?.days_count || 1)
     ) {
-      console.log("Assigned this ", String(dayParam));
-
       setSelectedDay(String(dayParam));
     } else if (itineraryDetails && itineraryDetails?.days_count >= 1) {
       setSelectedDay("1");
@@ -143,7 +148,7 @@ const ItineraryPage: FC<FetchTripData> = ({
   }, []);
 
   useEffect(() => {
-    // Set URL
+    // Set URL on state change
     if (selectedDay) {
       window.history.pushState(
         null,
@@ -152,9 +157,16 @@ const ItineraryPage: FC<FetchTripData> = ({
       );
     }
 
+    // Filter activities on state change
     if (selectedDay) {
       const activities = tripActivities?.filter((i) => i.day === +selectedDay);
-      console.log(activities);
+
+      activities?.sort((a, b) => {
+        return (
+          new Date(`2024/10/10 ${a.time}`).getTime() -
+          new Date(`2024/10/10 ${b.time}`).getTime()
+        );
+      });
 
       if (activities && activities.length > 0) {
         setFilteredActivities(activities);
@@ -164,7 +176,7 @@ const ItineraryPage: FC<FetchTripData> = ({
     }
   }, [selectedDay]);
 
-  const handleAddDay = () => {
+  const handleAddDay = async () => {
     setItineraryDetails((prev) => {
       if (prev) {
         const dayNum = prev.days_count + 1;
@@ -186,160 +198,63 @@ const ItineraryPage: FC<FetchTripData> = ({
       }
       return null;
     });
+
+    const token = await getToken({ template: "lakbai-supabase" });
+    const result = await updateDay({
+      token,
+      action: "add",
+      day: itineraryDetails!.days_count + 1,
+      itineraryId: itineraryDetails!.id,
+    });
+  };
+
+  const handleDeleteDay = async () => {
+    setItineraryDetails((prev) => {
+      if (prev) {
+        const dayNum = prev.days_count - 1;
+
+        if (prev.days_count === 0) {
+          toast({
+            title: "Day count at 0",
+            description: `You cannot remove any more days.`,
+            variant: "default",
+          });
+
+          return prev;
+        }
+        return { ...prev, days_count: dayNum };
+      }
+      return null;
+    });
+
+    if (itineraryDetails!.days_count === 0) {
+      return;
+    }
+
+    const token = await getToken({ template: "lakbai-supabase" });
+    const result = await updateDay({
+      token,
+      action: "delete",
+      day: itineraryDetails!.days_count - 1,
+      itineraryId: itineraryDetails!.id,
+    });
+    console.log(result);
   };
 
   return (
     <MaxWidthWrapper className="flex w-full flex-col py-14 md:py-20">
-      {/* <h1>Gemini Testing by Gio</h1>
-            <Button
-              onClick={() => {
-                console.log("Fetching data...");
-    
-                geminiItineraryRun()
-                  .then((data) => {
-                    setItinerary(data);
-                    console.log(data);
-                  })
-                  .then(() => setIsGeminiLoading(false));
-              }}
-            >
-              Fetch Data
-            </Button> */}
-
       <div className="list-inside list-decimal text-sm text-center sm:text-left">
-        {/* <Dialog>
-                <DialogTrigger asChild>
-                  <Button>Add new activity</Button>
-                </DialogTrigger>
-    
-                <DialogContent className="max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle className="text-2xl font-bold">
-                      Add new destination
-                    </DialogTitle>
-                    <DialogDescription>Fill up details below</DialogDescription>
-                  </DialogHeader>
-                  <form>
-                    <div className="grid w-full items-center gap-4">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="secondary">💡 Ask lak*bai</Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
-                          <DialogHeader>
-                            <DialogTitle>Edit profile</DialogTitle>
-                            <DialogDescription>
-                              Make changes to your profile here. Click save when
-                              you&apos;re done.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="name" className="text-right">
-                                Name
-                              </Label>
-                              <Input
-                                id="name"
-                                defaultValue="Pedro Duarte"
-                                className="col-span-3"
-                              />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="username" className="text-right">
-                                Username
-                              </Label>
-                              <Input
-                                id="username"
-                                defaultValue="@peduarte"
-                                className="col-span-3"
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button type="submit">Save changes</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                      <div className="flex flex-col space-y-1.5">
-                        <Label htmlFor="name">Name</Label>
-                        <Input id="name" placeholder="Name of the destination" />
-                      </div>
-                      <div className="flex flex-col space-y-1.5">
-                        <Label htmlFor="name">Destination</Label>
-    
-                        <GooglePlacesAutocomplete
-                          apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
-                          placeholder="Enter location"
-                        />
-                      </div>
-                      <div className="flex flex-col space-y-1.5">
-                        <Label htmlFor="framework">Time</Label>
-                        <div className="flex space-x-2">
-                          <Select defaultValue="8">
-                            <SelectTrigger id="framework">
-                              <SelectValue placeholder="00" />
-                            </SelectTrigger>
-                            <SelectContent position="popper">
-                              <SelectItem value="1">1</SelectItem>
-                              <SelectItem value="2">2</SelectItem>
-                              <SelectItem value="3">3</SelectItem>
-                              <SelectItem value="4">4</SelectItem>
-                              <SelectItem value="5">5</SelectItem>
-                              <SelectItem value="6">6</SelectItem>
-                              <SelectItem value="7">7</SelectItem>
-                              <SelectItem value="8">8</SelectItem>
-                              <SelectItem value="9">9</SelectItem>
-                              <SelectItem value="10">10</SelectItem>
-                              <SelectItem value="11">11</SelectItem>
-                              <SelectItem value="12">12</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <div>:</div>
-                          <Select defaultValue="00">
-                            <SelectTrigger id="framework">
-                              <SelectValue placeholder="00" />
-                            </SelectTrigger>
-                            <SelectContent position="popper">
-                              <SelectItem value="00">00</SelectItem>
-                              <SelectItem value="15">15</SelectItem>
-                              <SelectItem value="30">30</SelectItem>
-                              <SelectItem value="45">45</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Select defaultValue="am">
-                            <SelectTrigger id="framework">
-                              <SelectValue placeholder="AM" />
-                            </SelectTrigger>
-                            <SelectContent position="popper">
-                              <SelectItem value="am">AM</SelectItem>
-                              <SelectItem value="pm">PM</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="flex flex-col space-y-1.5">
-                        <Label htmlFor="name">Description</Label>
-                        <Textarea style={{ maxHeight: "100px" }} />
-                      </div>
-                    </div>
-                  </form>
-                  <DialogFooter className="flex justify-between">
-                    <Button variant="outline">Cancel</Button>
-                    <Button>Deploy</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog> */}
-
         {/* Title Section */}
         <section className="flex flex-col md:flex-row space-y-4 justify-between w-full mb-14">
           <div className="flex flex-col space-y-4">
-            <div className="flex flex-col md:flex-row text-5xl font-bold text-left space-y-4 md:space-y-0">
+            <div className="flex flex-col md:flex-row text-5xl md:text-6xl font-bold text-left space-y-4 md:space-y-0 mr-4">
               <h1 className="text-title dark:text-title-foreground text">
                 {itineraryDetails?.name ?? "Gio's Crazy Party"}
-              </h1>
-              <span className="ml-2 hidden md:block">
                 {emoji?.emoji ?? "🦜"}
-              </span>
+              </h1>
+              {/* <span className="ml-2 hidden md:block">
+                
+              </span> */}
             </div>
             <div className="flex flex-row flex-wrap gap-2 text-base">
               <Badge variant="default">
@@ -355,74 +270,7 @@ const ItineraryPage: FC<FetchTripData> = ({
             </div>
             <div className="md:flex md:space-x-2 space-y-2 md:space-y-0  w-full">
               <Button className="md:w-auto w-full">Explore Nearby</Button>
-              {/* {isDesktop ? (
-                <Dialog
-                  open={openTripDetails}
-                  onOpenChange={setOpenTripDetails}
-                >
-                  <DialogTrigger asChild>
-                    <Button className="md:w-auto w-full" variant="secondary">
-                      Edit Details
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px] p-8">
-                    <DialogHeader>
-                      <DialogTitle className="text-3xl font-bold">
-                        Edit Trip
-                      </DialogTitle>
-                      <DialogDescription>
-                        Modify trip details. Click save when you&apos;re done.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <EditTripForm
-                        startDate={startDate}
-                        setStartDate={setStartDate}
-                        endDate={endDate}
-                        setEndDate={setEndDate}
-                      />
-                    <DialogFooter className="pt-2">
-                      <DialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
-                      </DialogClose>
-                      <Button>Save</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              ) : (
-                <Drawer
-                  open={openTripDetails}
-                  onOpenChange={setOpenTripDetails}
-                >
-                  <DrawerTrigger asChild>
-                    <Button className="md:w-auto w-full" variant="secondary">
-                      Edit Details
-                    </Button>
-                  </DrawerTrigger>
-                  <DrawerContent>
-                    <DrawerHeader className="text-left">
-                      <DrawerTitle className="text-xl font-semibold">
-                        Edit Trip
-                      </DrawerTitle>
-                      <DrawerDescription>
-                        Modify trip details. Click save when you&apos;re done.
-                      </DrawerDescription>
-                    </DrawerHeader>
-                    <EditTripForm
-                        className="px-4"
-                        startDate={startDate}
-                        setStartDate={setStartDate}
-                        endDate={endDate}
-                        setEndDate={setEndDate}
-                      />
-                    <DrawerFooter className="pt-2">
-                      <DrawerClose asChild>
-                        <Button variant="outline">Cancel</Button>
-                      </DrawerClose>
-                      <Button>Save</Button>
-                    </DrawerFooter>
-                  </DrawerContent>
-                </Drawer>
-              )} */}
+              <Button className="md:w-auto w-full">Notes</Button>
             </div>
           </div>
           <div className="flex flex-col justify-start space-y-2">
@@ -433,14 +281,9 @@ const ItineraryPage: FC<FetchTripData> = ({
             >
               Download Itinerary
             </Button>
-            <Link
-              href="/dashboard"
-              className={buttonVariants({ variant: "default" })}
-            >
-              Trips Dashboard
-            </Link>
+
             <Button
-              variant="destructive"
+              variant="secondary"
               onClick={() => window.print()}
               className="print:hidden"
             >
@@ -488,14 +331,45 @@ const ItineraryPage: FC<FetchTripData> = ({
                     )
                   )}
                   <Button
-                    className={`w-full hidden ${
-                      (userRole === "edit" || userRole === "owner") && "block"
+                    className={`text-sm font-normal w-full hidden justify-center space-x-1 my-1 ${
+                      (userRole === "edit" || userRole === "owner") && "flex"
                     }`}
-                    variant="ghost"
+                    variant="default"
                     onClick={handleAddDay}
                   >
-                    + New day
+                    <Plus width={13} height={13} />
+                    {/* <span>Add Day</span> */}
                   </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        className={`text-sm font-normal w-full hidden justify-center space-x-1 ${
+                          (userRole === "edit" || userRole === "owner") &&
+                          "flex"
+                        }`}
+                        variant="secondary"
+                      >
+                        <Minus width={13} height={13} />
+                        {/* <span>Remove Day</span> */}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will delete the latest day which is Day{" "}
+                          {itineraryDetails?.days_count}. This action cannot be
+                          undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteDay}>
+                          Continue
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </SelectContent>
               </Select>
             </div>
@@ -507,11 +381,19 @@ const ItineraryPage: FC<FetchTripData> = ({
           {itineraryDetails!.days_count === 0 && (
             <div className="w-full flex flex-col justify-center items-center min-h-56 space-y-1 bg-card border-border border-2 border-dashed rounded-xl transition-all">
               <span className="text-2xl">👻</span>
-              <h3 className="text-lg">Start planning your trip!</h3>
-              <p className="text-sm opacity-60">
-                Click the <span className="font-semibold">Add New Day</span>{" "}
-                button.
-              </p>
+              <h3 className="text-lg">
+                {userRole === "owner" || userRole === "edit"
+                  ? "Start planning your trip!"
+                  : "Boo! "}
+              </h3>
+              {userRole === "owner" || userRole === "edit" ? (
+                <p className="text-sm opacity-60">
+                  Click the <span className="font-semibold">Add Day</span>{" "}
+                  button.
+                </p>
+              ) : (
+                <p className="text-sm opacity-60">It's empty in here..</p>
+              )}
             </div>
           )}
 
@@ -521,14 +403,37 @@ const ItineraryPage: FC<FetchTripData> = ({
                 <h3 className="text-3xl font-bold">Day {selectedDay}</h3>
                 {(userRole === "owner" || userRole === "edit") && (
                   <div className="flex space-x-2">
-                    <Button>
+                    <Button
+                      variant="default"
+                      onClick={() => setIsAddActivityOpen(true)}
+                    >
                       <Plus width={14} height={14} />{" "}
                       <span className="ml-2 hidden sm:block">Add activity</span>
                     </Button>
-                    <Button variant="secondary">
-                      <Trash width={14} height={14} />
-                      <span className="ml-2 hidden sm:block">Delete</span>
-                    </Button>
+
+                    {/* Add Activity Sheet Screen */}
+                    <AddActivitySheet
+                      isAddActivityOpen={isAddActivityOpen}
+                      setIsAddActivityOpen={setIsAddActivityOpen}
+                    />
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="secondary" className="">
+                          <EllipsisVertical
+                            width={17}
+                            height={17}
+                            className="shrink-0"
+                          />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem className="cursor-pointer">
+                          <Trash className="mr-2 h-4 w-4" />
+                          <span>Delete Activities</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 )}
               </div>
@@ -579,7 +484,6 @@ const ItineraryPage: FC<FetchTripData> = ({
                     Reminder:{" "}
                   </span>
                 </div>
-
                 <p className="text-title/60">
                   Clicking the activity opens its location on Google Maps in a
                   new tab.
@@ -608,18 +512,11 @@ function ActivityCard({
 
   return (
     <div
-      className={`relative w-full h-full flex items-center space-x-4 bg-card border-accent border-2 rounded-2xl p-6 hover:bg-primary/60 transition-all cursor-pointer `}
+      className={`relative w-full h-full flex items-center space-x-4 bg-card border-accent border-2 rounded-2xl p-6 hover:bg-primary/50 transition-all cursor-pointer`}
       // ${(userRole === "public" || userRole === "view") && "pointer-events-none"}
     >
       {/* Link to Google Maps */}
-      <a
-        href={`https://www.google.com/maps/search/?api=1&query=${encodeURI(
-          address!
-        )}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute inset-0 z-10"
-      />
+
       <div className=" flex-grow text-left space-y-1 pr-6">
         <p className="text-sm text-muted-foreground font-semibold">{time}</p>
         <h2 className="text-title text-xl font-extrabold">{name}</h2>
@@ -629,18 +526,32 @@ function ActivityCard({
         </p>
       </div>
 
+      <a
+        href={`https://www.google.com/maps/search/?api=1&query=${encodeURI(
+          address!
+        )}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute inset-0 z-10"
+      />
+
       {(userRole === "owner" || userRole === "edit") && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="absolute top-5 right-5 size-8 rounded-full bg-accent/60 text-accent-foreground/50 flex justify-center items-center z-20 hover:bg-accent transition-colors">
-              <Settings width={17} height={17} />
+            <div className="absolute top-5 right-5 size-7 rounded-full bg-accent/50 text-accent-foreground/50 flex justify-center items-center z-20 hover:bg-accent transition-colors">
+              <EllipsisVertical width={15} height={15} />
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuLabel>Settings</DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onSelect={() => setIsEditOpen(true)}
+            >
+              <SquarePen className="mr-2 h-4 w-4" />
+              <span>Edit Activity</span>
+            </DropdownMenuItem>
 
-            <DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
               <Map className="mr-2 h-4 w-4" />
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURI(
@@ -653,12 +564,12 @@ function ActivityCard({
               </a>
             </DropdownMenuItem>
 
-            <DropdownMenuItem onSelect={() => setIsEditOpen(true)}>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Edit Activity</span>
-            </DropdownMenuItem>
+            <DropdownMenuSeparator />
 
-            <DropdownMenuItem onSelect={() => setDeleteAlert(true)}>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onSelect={() => setDeleteAlert(true)}
+            >
               <Trash className="mr-2 h-4 w-4" />
               <span>Delete Activity</span>
             </DropdownMenuItem>
@@ -719,7 +630,7 @@ function ActivityCard({
         </Sheet>
       )}
 
-      {/* Delete Alert Dialog */}
+      {/* Delete Activity Alert Dialog */}
       {(userRole === "owner" || userRole === "edit") && (
         <AlertDialog open={deleteAlert} onOpenChange={setDeleteAlert}>
           <AlertDialogContent>
@@ -741,4 +652,92 @@ function ActivityCard({
   );
 }
 
-function NewActivityProfileForm() {}
+function AddActivitySheet({ isAddActivityOpen, setIsAddActivityOpen }) {
+  return (
+    <Sheet open={isAddActivityOpen} onOpenChange={setIsAddActivityOpen}>
+      <SheetContent className="max-w-[940px]">
+        <SheetHeader>
+          <SheetTitle>Add activity</SheetTitle>
+          <SheetDescription>
+            Add details to your activity here. Click save when you're done.
+          </SheetDescription>
+        </SheetHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Name
+            </Label>
+            <Input id="name" className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="address" className="text-right">
+              Location
+            </Label>
+            <div className="col-span-3">
+              <GooglePlacesAutocomplete
+                apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="framework" className="col-span-1 text-right">
+              Time
+            </Label>
+
+            <Select defaultValue="8">
+              <SelectTrigger id="framework">
+                <SelectValue placeholder="00" />
+              </SelectTrigger>
+              <SelectContent className="col-span-1" position="popper">
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4</SelectItem>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="6">6</SelectItem>
+                <SelectItem value="7">7</SelectItem>
+                <SelectItem value="8">8</SelectItem>
+                <SelectItem value="9">9</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="11">11</SelectItem>
+                <SelectItem value="12">12</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select defaultValue="00">
+              <SelectTrigger id="framework">
+                <SelectValue placeholder="00" />
+              </SelectTrigger>
+              <SelectContent className="col-span-1" position="popper">
+                <SelectItem value="00">00</SelectItem>
+                <SelectItem value="15">15</SelectItem>
+                <SelectItem value="30">30</SelectItem>
+                <SelectItem value="45">45</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select defaultValue="am">
+              <SelectTrigger id="framework">
+                <SelectValue placeholder="AM" />
+              </SelectTrigger>
+              <SelectContent className="col-span-1" position="popper">
+                <SelectItem value="am">AM</SelectItem>
+                <SelectItem value="pm">PM</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-start  gap-4">
+            <Label htmlFor="description" className="text-right mt-2">
+              Description
+            </Label>
+            <Textarea id="description" className="col-span-3" />
+          </div>
+        </div>
+        <SheetFooter>
+          <SheetClose asChild>
+            <Button type="submit">Save changes</Button>
+          </SheetClose>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  );
+}

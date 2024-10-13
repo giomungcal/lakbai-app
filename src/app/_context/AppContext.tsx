@@ -14,6 +14,13 @@ import {
 } from "react";
 import { Database } from "../../../database.types";
 
+interface ContextProviderProps {
+  children: ReactNode;
+}
+
+type ItineraryDetails = Database["public"]["Tables"]["itineraries"]["Insert"];
+type ActivitiesDetails = Database["public"]["Tables"]["activities"]["Insert"];
+
 interface TripsContext {
   startDate: Date;
   setStartDate: Dispatch<SetStateAction<Date>>;
@@ -25,11 +32,16 @@ interface TripsContext {
   setItineraryDetails: Dispatch<SetStateAction<ItineraryDetails>>;
 }
 
-interface TripsContextProviderProps {
-  children: ReactNode;
-}
+interface TripsContext {
+  startDate: Date;
+  setStartDate: Dispatch<SetStateAction<Date>>;
+  endDate: Date;
+  setEndDate: Dispatch<SetStateAction<Date>>;
 
-type ItineraryDetails = Database["public"]["Tables"]["itineraries"]["Insert"];
+  addTrip: () => Promise<boolean>;
+  itineraryDetails: ItineraryDetails;
+  setItineraryDetails: Dispatch<SetStateAction<ItineraryDetails>>;
+}
 
 const defaultItinerary: ItineraryDetails = {
   address: "",
@@ -45,9 +57,7 @@ const defaultItinerary: ItineraryDetails = {
 
 const TripsContext = createContext<TripsContext | null>(null);
 
-export const TripsContextProvider = ({
-  children,
-}: TripsContextProviderProps) => {
+export const TripsContextProvider = ({ children }: ContextProviderProps) => {
   const { userId, getToken } = useAuth();
 
   const [itineraryDetails, setItineraryDetails] =
@@ -149,3 +159,11 @@ export function useTripsContext() {
   }
   return context;
 }
+
+const ActivitiesContext = createContext<null>(null);
+
+export const ActivitiesContextProvider = ({
+  children,
+}: ContextProviderProps) => {
+  return null;
+};
