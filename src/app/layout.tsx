@@ -25,7 +25,7 @@ export default function RootLayout({
         <ClerkProvider>
           <TripsContextProvider>
             <Navbar />
-            <main className="min-h-[calc(100vh-3.5rem-1px)]">{children}</main>
+            <main className="min-h-[calc(100vh-3.5rem)]">{children}</main>
             <Toaster />
           </TripsContextProvider>
         </ClerkProvider>

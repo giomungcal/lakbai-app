@@ -21,7 +21,9 @@ const Navbar = () => {
       <MaxWidthWrapper>
         <nav className="h-14 flex justify-between items-center">
           <div>
-            <Link href="/">LakbAI</Link>
+            <Link href="/" className="font-bold text-title">
+              LakbAI
+            </Link>
           </div>
           <div className="space-x-2">
             <SignedOut>

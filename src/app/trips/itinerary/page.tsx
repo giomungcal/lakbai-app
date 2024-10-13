@@ -43,8 +43,6 @@ const Page = async ({ searchParams }: PageProps) => {
       const itinerary = await getSpecificItinerary({ itineraryId, token });
       const activities = await getSpecificActivity({ itineraryId, token });
 
-      //   itinerary?.map((i) => console.log("Auth User Trip: ", i.name));
-
       // Identify the User Role: owner, viewer, editor, anonymous
       let userRole: UserRole = "none";
 
@@ -86,12 +84,6 @@ const Page = async ({ searchParams }: PageProps) => {
   }
 
   const { itinerary, activities, userRole } = await fetchTripData();
-
-  // console.log("Activities", activities);
-  // console.log("Itineraries", itinerary);
-  // console.log("User's Role:", userRole);
-
-  //   IF NO Itinerary, meaning does not exist, or inaccessible, reach out to user
 
   // Error 404 Page
   if (!itinerary || itinerary.length === 0) {

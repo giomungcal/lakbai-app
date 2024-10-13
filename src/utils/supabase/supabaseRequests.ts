@@ -63,7 +63,7 @@ export const getItineraries = async ({
 }: {
   userId: string;
   token: string;
-}) => {
+}): Promise<Itinerary[] | undefined> => {
   const supabase = await supabaseClient(token);
 
   // Fetch user roles first

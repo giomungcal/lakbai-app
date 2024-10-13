@@ -3,7 +3,14 @@
 import { getItineraries } from "@/utils/supabase/supabaseRequests";
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
+import { Database } from "../../../database.types";
 import TripsPage from "./TripsPage";
+
+type Itineraries = Database["public"]["Tables"]["itineraries"]["Row"];
+
+interface FetchItineraries {
+  trips: Itineraries[] | undefined;
+}
 
 const Page = async () => {
   const { userId, getToken } = auth();
@@ -13,19 +20,25 @@ const Page = async () => {
     return notFound();
   }
 
-  async function fetchItineraries() {
+  async function fetchItineraries(): Promise<Itineraries[] | undefined> {
     try {
       const token = await getToken({ template: "lakbai-supabase" });
 
       if (!token || !userId) {
         console.error("No token received from Clerk.");
-        return null;
+        return undefined;
       }
       const trips = await getItineraries({ userId, token });
+      trips?.sort((a, b) => {
+        return (
+          new Date(`${a.start_date}`).getTime() -
+          new Date(`${b.start_date}`).getTime()
+        );
+      });
       return trips;
     } catch (error) {
       console.error("Error fetching token or itineraries:", error);
-      return null;
+      return undefined;
     }
   }
 

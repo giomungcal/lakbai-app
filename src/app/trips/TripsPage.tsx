@@ -129,18 +129,6 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
     subscribeToRealtime();
   }, [trips]);
 
-  // Notify user when realtime subscription token expires. Refresh needed for collab updates.
-  // useEffect(() => {
-  //   const timeoutId = setTimeout(() => {
-  //     toast({
-  //       title: "Refresh page to get latest collaboration updates.",
-  //       variant: "default",
-  //     });
-  //   }, 60000);
-
-  //   return () => clearTimeout(timeoutId);
-  // }, []);
-
   async function handleTripSave() {
     const isResultSuccessful = await addTrip();
     if (isResultSuccessful) setOpenTripDetails(false);
@@ -264,7 +252,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                 return (
                   <div
                     key={index}
-                    className="relative flex flex-col justify-between h-52 bg-secondary/30 border-border border-2 rounded-2xl p-5 hover:bg-secondary/20 transition-all"
+                    className="relative flex flex-col justify-between h-52 bg-secondary/30 border-border border-2 rounded-2xl p-5 hover:bg-secondary/50 transition-all"
                   >
                     <Link
                       className="absolute inset-0 z-10"
@@ -312,7 +300,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                 );
               }
             )}
-          <Button
+          {/* <Button
             onClick={() => {
               setOpenTripDetails(true);
             }}
@@ -322,7 +310,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
             <p className="font-medium text-base text-foreground/60">
               + add trip
             </p>
-          </Button>
+          </Button> */}
         </section>
       )}
     </MaxWidthWrapper>

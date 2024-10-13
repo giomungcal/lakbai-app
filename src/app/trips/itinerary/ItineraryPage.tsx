@@ -118,7 +118,6 @@ const ItineraryPage: FC<FetchTripData> = ({
   const [itineraryDetails, setItineraryDetails] =
     useState<ItineraryDetails | null>(itinerary?.[0] ?? null);
   const [tripActivities, setTripActivities] = useState(activities);
-  const emoji = EMOJIS.find(({ value }) => value === itineraryDetails?.emoji);
   const numOfPeople = NUMBER_OF_PEOPLE.find(
     ({ value }) => value === itineraryDetails?.num_of_people
   );
@@ -250,7 +249,7 @@ const ItineraryPage: FC<FetchTripData> = ({
             <div className="flex flex-col md:flex-row text-5xl md:text-6xl font-bold text-left space-y-4 md:space-y-0 mr-4">
               <h1 className="text-title dark:text-title-foreground text">
                 {itineraryDetails?.name ?? "Gio's Crazy Party"}
-                {emoji?.emoji ?? "🦜"}
+                <span className="ml-2">{itineraryDetails?.emoji ?? "🦜"}</span>
               </h1>
               {/* <span className="ml-2 hidden md:block">
                 
@@ -330,46 +329,52 @@ const ItineraryPage: FC<FetchTripData> = ({
                       </SelectItem>
                     )
                   )}
-                  <Button
-                    className={`text-sm font-normal w-full hidden justify-center space-x-1 my-1 ${
-                      (userRole === "edit" || userRole === "owner") && "flex"
-                    }`}
-                    variant="default"
-                    onClick={handleAddDay}
-                  >
-                    <Plus width={13} height={13} />
-                    {/* <span>Add Day</span> */}
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
+                  <div className="flex space-x-1 mt-1">
+                    {itineraryDetails!.days_count < MAX_DAYS && (
                       <Button
-                        className={`text-sm font-normal w-full hidden justify-center space-x-1 ${
+                        className={`text-sm font-normal w-full hidden justify-center space-x-1  ${
                           (userRole === "edit" || userRole === "owner") &&
                           "flex"
                         }`}
-                        variant="secondary"
+                        variant="default"
+                        onClick={handleAddDay}
                       >
-                        <Minus width={13} height={13} />
-                        {/* <span>Remove Day</span> */}
+                        <Plus width={13} height={13} />
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will delete the latest day which is Day{" "}
-                          {itineraryDetails?.days_count}. This action cannot be
-                          undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteDay}>
-                          Continue
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                    )}
+
+                    {itineraryDetails?.days_count !== 0 && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            className={`text-sm font-normal w-full hidden justify-center space-x-1 ${
+                              (userRole === "edit" || userRole === "owner") &&
+                              "flex"
+                            }`}
+                            variant="secondary"
+                          >
+                            <Minus width={13} height={13} />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will delete the latest day which is Day{" "}
+                              {itineraryDetails?.days_count}. This action cannot
+                              be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteDay}>
+                              Continue
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
                 </SelectContent>
               </Select>
             </div>
@@ -397,100 +402,104 @@ const ItineraryPage: FC<FetchTripData> = ({
             </div>
           )}
 
-          {selectedDay && selectedDay !== "0" && (
-            <section className="flex flex-col space-y-6 p-8 bg-accent/70 rounded-2xl shadow-md">
-              <div className="flex justify-between">
-                <h3 className="text-3xl font-bold">Day {selectedDay}</h3>
-                {(userRole === "owner" || userRole === "edit") && (
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="default"
-                      onClick={() => setIsAddActivityOpen(true)}
-                    >
-                      <Plus width={14} height={14} />{" "}
-                      <span className="ml-2 hidden sm:block">Add activity</span>
-                    </Button>
-
-                    {/* Add Activity Sheet Screen */}
-                    <AddActivitySheet
-                      isAddActivityOpen={isAddActivityOpen}
-                      setIsAddActivityOpen={setIsAddActivityOpen}
-                    />
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" className="">
-                          <EllipsisVertical
-                            width={17}
-                            height={17}
-                            className="shrink-0"
-                          />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem className="cursor-pointer">
-                          <Trash className="mr-2 h-4 w-4" />
-                          <span>Delete Activities</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                )}
-              </div>
-
-              {/* Check if there are activities in the DB for the selected day */}
-              {!filteredActivities || filteredActivities.length === 0 ? (
-                <div className="w-full flex flex-col justify-center items-center min-h-56 space-y-1 bg-card border-border border-2 border-dashed rounded-xl transition-all">
-                  <span className="text-2xl">👻</span>
-                  <h3 className="text-lg">
-                    Start adding activities to your trip!
-                  </h3>
-                  <p className="text-sm opacity-60">
-                    Click the{" "}
-                    <span className="font-semibold">Add activity</span> button.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredActivities.map((a) => (
-                    <ActivityCard
-                      key={a.id}
-                      activities={a}
-                      userRole={userRole}
-                    />
-                  ))}
+          {itineraryDetails!.days_count === 0 ||
+            (selectedDay && selectedDay !== "0" && (
+              <section className="flex flex-col space-y-6 p-8 bg-accent/70 rounded-2xl shadow-md">
+                <div className="flex justify-between">
+                  <h3 className="text-3xl font-bold">Day {selectedDay}</h3>
                   {(userRole === "owner" || userRole === "edit") && (
-                    <Button
-                      variant="outline"
-                      className="h-full min-h-[100px] flex items-center justify-center border-2 rounded-2xl border-dashed border-border cursor-pointer "
-                    >
-                      <p className="font-medium text-base text-foreground/60">
-                        + add activity
-                      </p>
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="default"
+                        onClick={() => setIsAddActivityOpen(true)}
+                      >
+                        <Plus width={14} height={14} />{" "}
+                        <span className="ml-2 hidden sm:block">
+                          Add activity
+                        </span>
+                      </Button>
+
+                      {/* Add Activity Sheet Screen */}
+                      <AddActivitySheet
+                        isAddActivityOpen={isAddActivityOpen}
+                        setIsAddActivityOpen={setIsAddActivityOpen}
+                      />
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="secondary" className="">
+                            <EllipsisVertical
+                              width={17}
+                              height={17}
+                              className="shrink-0"
+                            />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem className="cursor-pointer">
+                            <Trash className="mr-2 h-4 w-4" />
+                            <span>Delete Activities</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   )}
                 </div>
-              )}
 
-              {/* Reminder */}
-              <div className="flex flex-col md:flex-row items-center space-x-2 p-4 rounded-xl border-ring border-1 border-dashed bg-primary">
-                <div className="flex items-center space-x-2">
-                  <Info
-                    width={15}
-                    height={15}
-                    className="shrink-0 text-title/70"
-                  />
-                  <span className="text-title/80 font-semibold">
-                    Reminder:{" "}
-                  </span>
+                {/* Check if there are activities in the DB for the selected day */}
+                {!filteredActivities || filteredActivities.length === 0 ? (
+                  <div className="w-full flex flex-col justify-center items-center min-h-56 space-y-1 bg-card border-border border-2 border-dashed rounded-xl transition-all">
+                    <span className="text-2xl">👻</span>
+                    <h3 className="text-lg">
+                      Start adding activities to your trip!
+                    </h3>
+                    <p className="text-sm opacity-60">
+                      Click the{" "}
+                      <span className="font-semibold">Add activity</span>{" "}
+                      button.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredActivities.map((a) => (
+                      <ActivityCard
+                        key={a.id}
+                        activities={a}
+                        userRole={userRole}
+                      />
+                    ))}
+                    {(userRole === "owner" || userRole === "edit") && (
+                      <Button
+                        variant="outline"
+                        className="h-full min-h-[100px] flex items-center justify-center border-2 rounded-2xl border-dashed border-border cursor-pointer "
+                      >
+                        <p className="font-medium text-base text-foreground/60">
+                          + add activity
+                        </p>
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Reminder */}
+                <div className="flex flex-col md:flex-row items-center space-x-2 p-4 rounded-xl border-ring border-1 border-dashed bg-primary">
+                  <div className="flex items-center space-x-2">
+                    <Info
+                      width={15}
+                      height={15}
+                      className="shrink-0 text-title/70"
+                    />
+                    <span className="text-title/80 font-semibold">
+                      Reminder:{" "}
+                    </span>
+                  </div>
+                  <p className="text-title/60">
+                    Clicking the activity opens its location on Google Maps in a
+                    new tab.
+                  </p>
                 </div>
-                <p className="text-title/60">
-                  Clicking the activity opens its location on Google Maps in a
-                  new tab.
-                </p>
-              </div>
-            </section>
-          )}
+              </section>
+            ))}
         </section>
       </div>
     </MaxWidthWrapper>
