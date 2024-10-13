@@ -33,3 +33,9 @@ export const NUMBER_OF_PEOPLE = [
 ] as const;
 
 export type NumberOfPeopleValue = (typeof NUMBER_OF_PEOPLE)[number]["value"];
+
+// ---------------------------------------
+
+export const MAX_DAYS = 14 as const;
+
+export type UserRole = "view" | "edit" | "owner" | "public" | "none";

@@ -33,16 +33,13 @@ const Navbar = () => {
               {!isTripsPage && (
                 <Link
                   href={"/trips"}
-                  className={buttonVariants({ variant: "default" })}
+                  className={buttonVariants({ variant: "secondary" })}
                 >
                   Trips
                 </Link>
               )}
               <SignOutButton>
-                <Link
-                  href="/"
-                  className={buttonVariants({ variant: "secondary" })}
-                >
+                <Link href="/" className={buttonVariants({ variant: "ghost" })}>
                   Logout
                 </Link>
               </SignOutButton>

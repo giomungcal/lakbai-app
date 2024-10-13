@@ -3,6 +3,7 @@ import {
   getSpecificItinerary,
   getUserRoles,
 } from "@/utils/supabase/supabaseRequests";
+import { UserRole } from "@/validators/options";
 import { auth } from "@clerk/nextjs/server";
 import { Database } from "../../../../database.types";
 import ItineraryPage from "./ItineraryPage";
@@ -13,7 +14,6 @@ interface PageProps {
   };
 }
 
-type UserRole = "view" | "edit" | "owner" | "public" | "none";
 type Itineraries = Database["public"]["Tables"]["itineraries"]["Row"];
 type Activities = Database["public"]["Tables"]["activities"]["Row"];
 
@@ -87,9 +87,9 @@ const Page = async ({ searchParams }: PageProps) => {
 
   const { itinerary, activities, userRole } = await fetchTripData();
 
-  console.log("Activities", activities);
-  console.log("Itineraries", itinerary);
-  console.log("User's Role:", userRole);
+  // console.log("Activities", activities);
+  // console.log("Itineraries", itinerary);
+  // console.log("User's Role:", userRole);
 
   //   IF NO Itinerary, meaning does not exist, or inaccessible, reach out to user
 
