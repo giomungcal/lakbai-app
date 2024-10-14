@@ -1,3 +1,5 @@
+export type UserRole = "view" | "edit" | "owner" | "public" | "none";
+
 export type EmojiEntry = {
   value: string;
   emoji: string;
@@ -38,4 +40,24 @@ export type NumberOfPeopleValue = (typeof NUMBER_OF_PEOPLE)[number]["value"];
 
 export const MAX_DAYS = 14 as const;
 
-export type UserRole = "view" | "edit" | "owner" | "public" | "none";
+export const HOURS = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "11",
+  "12",
+] as const;
+export type HourType = (typeof HOURS)[number];
+
+export const MINUTE = ["00", "15", "30", "45"] as const;
+export type MinuteType = (typeof MINUTE)[number];
+
+export const PERIOD = ["AM", "PM"] as const;
+export type PeriodType = (typeof PERIOD)[number];

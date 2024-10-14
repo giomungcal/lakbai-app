@@ -72,7 +72,6 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   const [trips, setTrips] = useState(serverTrips);
   const [openTripDetails, setOpenTripDetails] = useState(false);
   const { addTrip } = useTripsContext();
-  // const [isRealtimeExpired, setIsRealtimeExpired] = useState<boolean>(false);
 
   useEffect(() => {
     const subscribeToRealtime = async () => {
@@ -130,8 +129,8 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   }, [trips]);
 
   async function handleTripSave() {
-    const isResultSuccessful = await addTrip();
-    if (isResultSuccessful) setOpenTripDetails(false);
+    const result = await addTrip();
+    if (result.length !== 0) setOpenTripDetails(false);
 
     // Update list when a new trip is added
     syncTripsWithDatabase();

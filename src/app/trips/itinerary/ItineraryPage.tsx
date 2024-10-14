@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  defaultActivityData,
+  useActivitiesContext,
+} from "@/app/_context/AppContext";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 import {
   AlertDialog,
@@ -13,44 +17,16 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -66,42 +42,38 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
-import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import { updateDay } from "@/utils/supabase/supabaseRequests";
 import {
-  EMOJIS,
+  getSpecificActivity,
+  updateDay,
+} from "@/utils/supabase/supabaseRequests";
+import {
+  HOURS,
+  HourType,
   MAX_DAYS,
+  MinuteType,
   NUMBER_OF_PEOPLE,
+  PeriodType,
   UserRole,
 } from "@/validators/options";
 import { useAuth } from "@clerk/nextjs";
-import { format } from "date-fns";
 import {
-  Calendar as CalendarIcon,
-  CircleEllipsis,
-  CircleEllipsisIcon,
   EllipsisVertical,
   Info,
   Map,
   Minus,
   Plus,
-  Settings,
-  Settings2,
   SquarePen,
   Trash,
+  TriangleAlert,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { FC, Fragment, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import { useMediaQuery } from "usehooks-ts";
 import { Database } from "../../../../database.types";
-import { geminiItineraryRun } from "./api/gemini/gemini";
 import { FetchTripData } from "./page";
 
 type ItineraryDetails = Database["public"]["Tables"]["itineraries"]["Row"];
@@ -117,7 +89,9 @@ const ItineraryPage: FC<FetchTripData> = ({
 
   const [itineraryDetails, setItineraryDetails] =
     useState<ItineraryDetails | null>(itinerary?.[0] ?? null);
-  const [tripActivities, setTripActivities] = useState(activities);
+  const [tripActivities, setTripActivities] = useState<Activities[] | null>(
+    activities
+  );
   const numOfPeople = NUMBER_OF_PEOPLE.find(
     ({ value }) => value === itineraryDetails?.num_of_people
   );
@@ -132,9 +106,12 @@ const ItineraryPage: FC<FetchTripData> = ({
     Activities[] | null
   >([]);
 
+  const { isSuccess } = useActivitiesContext();
+
+  // Set selectedDay based on URL on mount
   useEffect(() => {
     let dayParam = searchParams.get("day");
-    // Set selectedDay based on URL on mount
+
     if (
       dayParam &&
       Number(dayParam) <= MAX_DAYS &&
@@ -146,6 +123,7 @@ const ItineraryPage: FC<FetchTripData> = ({
     }
   }, []);
 
+  // Set URL & filter activities on state change
   useEffect(() => {
     // Set URL on state change
     if (selectedDay) {
@@ -159,11 +137,12 @@ const ItineraryPage: FC<FetchTripData> = ({
     // Filter activities on state change
     if (selectedDay) {
       const activities = tripActivities?.filter((i) => i.day === +selectedDay);
+      console.log("Activity Filter UseEffect ran.");
 
       activities?.sort((a, b) => {
         return (
-          new Date(`2024/10/10 ${a.time}`).getTime() -
-          new Date(`2024/10/10 ${b.time}`).getTime()
+          new Date(`2024/10/${a.day} ${a.time}`).getTime() -
+          new Date(`2024/10/${a.day} ${b.time}`).getTime()
         );
       });
 
@@ -173,7 +152,23 @@ const ItineraryPage: FC<FetchTripData> = ({
         setFilteredActivities([]);
       }
     }
-  }, [selectedDay]);
+  }, [selectedDay, tripActivities]);
+
+  useEffect(() => {
+    syncWithDatabase();
+    console.log("Sync UseEffect ran.");
+  }, [isSuccess]);
+
+  const syncWithDatabase = async () => {
+    const token = await getToken({ template: "lakbai-supabase" });
+    const result = await getSpecificActivity({
+      token,
+      itineraryId: itineraryDetails?.id,
+    });
+    if (result) {
+      setTripActivities(result);
+    }
+  };
 
   const handleAddDay = async () => {
     setItineraryDetails((prev) => {
@@ -199,7 +194,7 @@ const ItineraryPage: FC<FetchTripData> = ({
     });
 
     const token = await getToken({ template: "lakbai-supabase" });
-    const result = await updateDay({
+    await updateDay({
       token,
       action: "add",
       day: itineraryDetails!.days_count + 1,
@@ -251,9 +246,6 @@ const ItineraryPage: FC<FetchTripData> = ({
                 {itineraryDetails?.name ?? "Gio's Crazy Party"}
                 <span className="ml-2">{itineraryDetails?.emoji ?? "🦜"}</span>
               </h1>
-              {/* <span className="ml-2 hidden md:block">
-                
-              </span> */}
             </div>
             <div className="flex flex-row flex-wrap gap-2 text-base">
               <Badge variant="default">
@@ -411,6 +403,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                     <div className="flex space-x-2">
                       <Button
                         variant="default"
+                        className="ring-1 ring-gray-400/30"
                         onClick={() => setIsAddActivityOpen(true)}
                       >
                         <Plus width={14} height={14} />{" "}
@@ -423,11 +416,13 @@ const ItineraryPage: FC<FetchTripData> = ({
                       <AddActivitySheet
                         isAddActivityOpen={isAddActivityOpen}
                         setIsAddActivityOpen={setIsAddActivityOpen}
+                        itineraryId={itineraryDetails?.id}
+                        selectedDay={selectedDay}
                       />
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="secondary" className="">
+                          <Button variant="ghost" className="">
                             <EllipsisVertical
                               width={17}
                               height={17}
@@ -450,9 +445,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                 {!filteredActivities || filteredActivities.length === 0 ? (
                   <div className="w-full flex flex-col justify-center items-center min-h-56 space-y-1 bg-card border-border border-2 border-dashed rounded-xl transition-all">
                     <span className="text-2xl">👻</span>
-                    <h3 className="text-lg">
-                      Start adding activities to your trip!
-                    </h3>
+                    <h3 className="text-lg">Add activities to your trip!</h3>
                     <p className="text-sm opacity-60">
                       Click the{" "}
                       <span className="font-semibold">Add activity</span>{" "}
@@ -472,6 +465,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                       <Button
                         variant="outline"
                         className="h-full min-h-[100px] flex items-center justify-center border-2 rounded-2xl border-dashed border-border cursor-pointer "
+                        onClick={() => setIsAddActivityOpen(true)}
                       >
                         <p className="font-medium text-base text-foreground/60">
                           + add activity
@@ -508,13 +502,13 @@ const ItineraryPage: FC<FetchTripData> = ({
 
 export default ItineraryPage;
 
-function ActivityCard({
+const ActivityCard = ({
   activities,
   userRole,
 }: {
   activities: Activities;
   userRole: UserRole;
-}) {
+}) => {
   const { name, time, address, description } = activities;
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [deleteAlert, setDeleteAlert] = useState(false);
@@ -522,15 +516,17 @@ function ActivityCard({
   return (
     <div
       className={`relative w-full h-full flex items-center space-x-4 bg-card border-accent border-2 rounded-2xl p-6 hover:bg-primary/50 transition-all cursor-pointer`}
-      // ${(userRole === "public" || userRole === "view") && "pointer-events-none"}
     >
       {/* Link to Google Maps */}
 
       <div className=" flex-grow text-left space-y-1 pr-6">
         <p className="text-sm text-muted-foreground font-semibold">{time}</p>
         <h2 className="text-title text-xl font-extrabold">{name}</h2>
-        <p className="text-xs text-muted-foreground font-medium">{address}</p>
-        <p className="text-sm text-card-foreground line-clamp-1">
+        <p className="text-xs text-muted-foreground font-medium line-clamp-2">
+          {address}
+        </p>
+        {/* Removed line-clamp-2 on description */}
+        <p className="text-sm text-card-foreground line-clamp-2">
           {description}
         </p>
       </div>
@@ -659,9 +655,53 @@ function ActivityCard({
       )}
     </div>
   );
+};
+
+interface AddActivitySheet {
+  isAddActivityOpen: boolean;
 }
 
-function AddActivitySheet({ isAddActivityOpen, setIsAddActivityOpen }) {
+interface AddActivitySheet {
+  isAddActivityOpen: boolean;
+  setIsAddActivityOpen: Dispatch<SetStateAction<boolean>>;
+  itineraryId: string | undefined;
+  selectedDay: string;
+  setTripActivities: Dispatch<SetStateAction<Activities[]>>;
+}
+
+const AddActivitySheet = ({
+  isAddActivityOpen,
+  setIsAddActivityOpen,
+  itineraryId,
+  selectedDay: day,
+}: AddActivitySheet) => {
+  const {
+    activityData,
+    setActivityData,
+    submitTrip,
+    isFormComplete,
+    setIsFormComplete,
+  } = useActivitiesContext();
+
+  useEffect(() => {
+    if (!isAddActivityOpen) {
+      setActivityData(defaultActivityData);
+      setIsFormComplete(null);
+    }
+  }, [isAddActivityOpen]);
+
+  async function handleSubmitActivity() {
+    const result = await submitTrip({ itineraryId, day });
+    console.log(result);
+    if (!result) {
+      return;
+    }
+
+    if (result.length !== 0) {
+      setIsAddActivityOpen(false);
+    }
+  }
+
   return (
     <Sheet open={isAddActivityOpen} onOpenChange={setIsAddActivityOpen}>
       <SheetContent className="max-w-[940px]">
@@ -673,10 +713,18 @@ function AddActivitySheet({ isAddActivityOpen, setIsAddActivityOpen }) {
         </SheetHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
+            <Label htmlFor="title" className="text-right">
+              Title
             </Label>
-            <Input id="name" className="col-span-3" />
+            <Input
+              id="title"
+              className="col-span-3"
+              placeholder="Trekking at.."
+              value={activityData.name}
+              onChange={(e) =>
+                setActivityData((prev) => ({ ...prev, name: e.target.value }))
+              }
+            />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="address" className="text-right">
@@ -685,6 +733,13 @@ function AddActivitySheet({ isAddActivityOpen, setIsAddActivityOpen }) {
             <div className="col-span-3">
               <GooglePlacesAutocomplete
                 apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
+                selectProps={{
+                  onChange: (value) =>
+                    setActivityData((prev) => ({
+                      ...prev,
+                      address: value!.label,
+                    })),
+                }}
               />
             </div>
           </div>
@@ -693,27 +748,36 @@ function AddActivitySheet({ isAddActivityOpen, setIsAddActivityOpen }) {
               Time
             </Label>
 
-            <Select defaultValue="8">
+            <Select
+              defaultValue={activityData.hour}
+              onValueChange={(value) =>
+                setActivityData((prev) => ({
+                  ...prev,
+                  hour: value as HourType,
+                }))
+              }
+            >
               <SelectTrigger id="framework">
                 <SelectValue placeholder="00" />
               </SelectTrigger>
               <SelectContent className="col-span-1" position="popper">
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="6">6</SelectItem>
-                <SelectItem value="7">7</SelectItem>
-                <SelectItem value="8">8</SelectItem>
-                <SelectItem value="9">9</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="11">11</SelectItem>
-                <SelectItem value="12">12</SelectItem>
+                {HOURS.map((i) => (
+                  <SelectItem key={i} value={i}>
+                    {i}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
-            <Select defaultValue="00">
+            <Select
+              defaultValue={activityData.minute}
+              onValueChange={(value) =>
+                setActivityData((prev) => ({
+                  ...prev,
+                  minute: value as MinuteType,
+                }))
+              }
+            >
               <SelectTrigger id="framework">
                 <SelectValue placeholder="00" />
               </SelectTrigger>
@@ -724,13 +788,21 @@ function AddActivitySheet({ isAddActivityOpen, setIsAddActivityOpen }) {
                 <SelectItem value="45">45</SelectItem>
               </SelectContent>
             </Select>
-            <Select defaultValue="am">
+            <Select
+              defaultValue={activityData.period}
+              onValueChange={(value) =>
+                setActivityData((prev) => ({
+                  ...prev,
+                  period: value as PeriodType,
+                }))
+              }
+            >
               <SelectTrigger id="framework">
                 <SelectValue placeholder="AM" />
               </SelectTrigger>
               <SelectContent className="col-span-1" position="popper">
-                <SelectItem value="am">AM</SelectItem>
-                <SelectItem value="pm">PM</SelectItem>
+                <SelectItem value="AM">AM</SelectItem>
+                <SelectItem value="PM">PM</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -738,15 +810,44 @@ function AddActivitySheet({ isAddActivityOpen, setIsAddActivityOpen }) {
             <Label htmlFor="description" className="text-right mt-2">
               Description
             </Label>
-            <Textarea id="description" className="col-span-3" />
+            <Textarea
+              id="description"
+              className="col-span-3"
+              placeholder="Ride a tricycle to.."
+              onChange={(e) =>
+                setActivityData((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
+            />
+          </div>
+          {isFormComplete === false && (
+            <div className="flex text-xs items-center justify-center text-left space-x-2 p-2 rounded-md border-destructive/40 border-2 border-dashed bg-red-200/80 ">
+              <div className="flex items-center text-left space-x-2">
+                <TriangleAlert
+                  width={12}
+                  height={12}
+                  className="shrink-0 text-foreground"
+                />
+              </div>
+              <p className="text-foreground">Please fill up missing fields.</p>
+            </div>
+          )}
+          <div className="flex text-xs items-center justify-center text-left space-x-2 p-2 rounded-md border-ring border-1 border-dashed bg-secondary/70">
+            <div className="flex items-center text-left space-x-2">
+              <Info width={12} height={12} className="shrink-0 text-title/70" />
+              {/* <span className="text-title/80 font-semibold">Note: </span> */}
+            </div>
+            <p className="text-title">
+              Activities are automatically sorted based on time.
+            </p>
           </div>
         </div>
         <SheetFooter>
-          <SheetClose asChild>
-            <Button type="submit">Save changes</Button>
-          </SheetClose>
+          <Button onClick={handleSubmitActivity}>Save changes</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
   );
-}
+};

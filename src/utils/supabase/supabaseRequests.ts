@@ -1,3 +1,4 @@
+import { ActivityData } from "@/app/_context/AppContext";
 import { toast } from "@/hooks/use-toast";
 import { EMOJIS } from "@/validators/options";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -25,6 +26,20 @@ interface GetUserRoles {
   userId: string;
   token: string | null;
   supabase?: SupabaseClient;
+}
+
+interface UpdateDay {
+  token: string;
+  action: "add" | "delete";
+  day: number;
+  itineraryId: string;
+}
+
+interface AddActivity {
+  token: string | null;
+  activityData: ActivityData;
+  day: string;
+  itineraryId: string | undefined;
 }
 
 type ItineraryType = Itinerary[];
@@ -141,7 +156,7 @@ export const addItinerary = async ({
   userId,
   itineraryDetails,
   token,
-}: AddItinerary) => {
+}: AddItinerary): Promise<ItineraryType | undefined> => {
   const { name, address, emoji, start_date, end_date, num_of_people } =
     itineraryDetails;
   const emojiObject = EMOJIS.find((e) => e.value === emoji);
@@ -178,14 +193,12 @@ export const addItinerary = async ({
   return data;
 };
 
-interface UpdateDay {
-  token: string;
-  action: "add" | "delete";
-  day: number;
-  itineraryId: string;
-}
-
-export const updateDay = async ({ token, action, day, itineraryId }) => {
+export const updateDay = async ({
+  token,
+  action,
+  day,
+  itineraryId,
+}: UpdateDay): Promise<ItineraryType | undefined> => {
   const supabase = await supabaseClient(token);
 
   if (action === "add") {
@@ -220,4 +233,33 @@ export const updateDay = async ({ token, action, day, itineraryId }) => {
     }
     return data;
   }
+};
+
+export const addActivity = async ({
+  token,
+  itineraryId,
+  day,
+  activityData,
+}: AddActivity): Promise<ActivitiesType | undefined> => {
+  const { name, address, hour, minute, period, description } = activityData;
+
+  const time = `${hour}:${minute} ${period}`;
+
+  const supabase = await supabaseClient(token);
+  const { data, error } = await supabase
+    .from("activities")
+    .insert([
+      { itinerary_id: itineraryId, day, name, address, time, description },
+    ])
+    .select();
+
+  if (error) {
+    console.error(
+      "There has been an error fetching the data from Supabase: ",
+      error.message
+    );
+    return;
+  }
+
+  return data;
 };

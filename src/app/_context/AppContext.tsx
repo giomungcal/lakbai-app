@@ -1,8 +1,14 @@
 "use client";
 
 import { toast } from "@/hooks/use-toast";
-import { addItinerary } from "@/utils/supabase/supabaseRequests";
-import { EMOJIS, NUMBER_OF_PEOPLE } from "@/validators/options";
+import { addActivity, addItinerary } from "@/utils/supabase/supabaseRequests";
+import {
+  EMOJIS,
+  HourType,
+  MinuteType,
+  NUMBER_OF_PEOPLE,
+  PeriodType,
+} from "@/validators/options";
 import { useAuth } from "@clerk/nextjs";
 import {
   createContext,
@@ -10,6 +16,7 @@ import {
   ReactNode,
   SetStateAction,
   useContext,
+  useEffect,
   useState,
 } from "react";
 import { Database } from "../../../database.types";
@@ -19,7 +26,7 @@ interface ContextProviderProps {
 }
 
 type ItineraryDetails = Database["public"]["Tables"]["itineraries"]["Insert"];
-type ActivitiesDetails = Database["public"]["Tables"]["activities"]["Insert"];
+type ActivitiesDetails = Database["public"]["Tables"]["activities"]["Row"];
 
 interface TripsContext {
   startDate: Date;
@@ -27,20 +34,21 @@ interface TripsContext {
   endDate: Date;
   setEndDate: Dispatch<SetStateAction<Date>>;
 
-  addTrip: () => Promise<boolean>;
+  addTrip: () => Promise<ItineraryDetails[] | undefined>;
   itineraryDetails: ItineraryDetails;
   setItineraryDetails: Dispatch<SetStateAction<ItineraryDetails>>;
 }
 
-interface TripsContext {
-  startDate: Date;
-  setStartDate: Dispatch<SetStateAction<Date>>;
-  endDate: Date;
-  setEndDate: Dispatch<SetStateAction<Date>>;
-
-  addTrip: () => Promise<boolean>;
-  itineraryDetails: ItineraryDetails;
-  setItineraryDetails: Dispatch<SetStateAction<ItineraryDetails>>;
+interface ActivitiesContext {
+  activityData: ActivityData;
+  setActivityData: Dispatch<SetStateAction<ActivityData>>;
+  submitTrip: ({
+    itineraryId,
+    day,
+  }: AddActivity) => Promise<ActivitiesDetails[] | undefined>;
+  isFormComplete: boolean | null;
+  setIsFormComplete: Dispatch<SetStateAction<boolean | null>>;
+  isSuccess: boolean;
 }
 
 const defaultItinerary: ItineraryDetails = {
@@ -55,6 +63,29 @@ const defaultItinerary: ItineraryDetails = {
   start_date: new Date().toISOString(),
 };
 
+export interface ActivityData {
+  name: string;
+  address: string;
+  hour: HourType;
+  minute: MinuteType;
+  period: PeriodType;
+  description?: string;
+}
+
+export const defaultActivityData: ActivityData = {
+  name: "",
+  address: "",
+  hour: "8",
+  minute: "00",
+  period: "AM",
+  description: "",
+};
+
+interface AddActivity {
+  itineraryId: string | undefined;
+  day: string;
+}
+
 const TripsContext = createContext<TripsContext | null>(null);
 
 export const TripsContextProvider = ({ children }: ContextProviderProps) => {
@@ -67,8 +98,6 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
   const [endDate, setEndDate] = useState<Date>(new Date());
 
   function validationForm() {
-    let areDetailsComplete = false;
-
     const { name, address, emoji, start_date, end_date, num_of_people } =
       itineraryDetails;
 
@@ -80,13 +109,10 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
       !end_date ||
       !num_of_people
     ) {
-      areDetailsComplete = false;
+      return false;
     } else {
-      areDetailsComplete = true;
+      return true;
     }
-    console.log(areDetailsComplete);
-
-    return areDetailsComplete;
   }
 
   function resetValues() {
@@ -113,14 +139,9 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
             variant: "default",
           });
         }
-        return true;
+        return itinerary;
       } else {
-        toast({
-          title: "Token Error",
-          description: "There has been an error getting a token from Clerk",
-          variant: "destructive",
-        });
-        return false;
+        throw new Error("There has been an error getting a token from Clerk.");
       }
     } else {
       toast({
@@ -128,7 +149,7 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
         description: "Please fill in all required fields before submitting.",
         variant: "destructive",
       });
-      return false;
+      return;
     }
   }
 
@@ -160,10 +181,76 @@ export function useTripsContext() {
   return context;
 }
 
-const ActivitiesContext = createContext<null>(null);
+const ActivitiesContext = createContext<ActivitiesContext | null>(null);
 
 export const ActivitiesContextProvider = ({
   children,
 }: ContextProviderProps) => {
-  return null;
+  const { getToken } = useAuth();
+  const [activityData, setActivityData] =
+    useState<ActivityData>(defaultActivityData);
+  const [isFormComplete, setIsFormComplete] = useState<boolean | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    console.log(activityData);
+  }, [activityData]);
+
+  const validationForm = () => {
+    const { name, address, hour, minute, period } = activityData;
+    if (!name || !address || !hour || !minute || !period) {
+      return false;
+    } else {
+      return true;
+    }
+  };
+
+  const submitTrip = async ({ itineraryId, day }: AddActivity) => {
+    if (!validationForm()) {
+      setIsFormComplete(false);
+      return;
+    } else {
+      const token = await getToken({ template: "lakbai-supabase" });
+      const result = await addActivity({
+        token,
+        itineraryId,
+        day,
+        activityData,
+      });
+      if (result) {
+        setActivityData(defaultActivityData);
+        setIsSuccess((prev) => !prev);
+        setIsFormComplete(null);
+        return result;
+      }
+      return;
+    }
+  };
+
+  return (
+    <ActivitiesContext.Provider
+      value={{
+        activityData,
+        setActivityData,
+        submitTrip,
+        isFormComplete,
+        setIsFormComplete,
+        isSuccess,
+      }}
+    >
+      {children}
+    </ActivitiesContext.Provider>
+  );
 };
+
+export function useActivitiesContext() {
+  const context = useContext(ActivitiesContext);
+
+  if (!context) {
+    throw new Error(
+      "useActivitiesContext must be used within a ActivitiesContextProvider"
+    );
+  }
+
+  return context;
+}
