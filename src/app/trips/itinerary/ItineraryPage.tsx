@@ -47,6 +47,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import {
+  deleteActivity,
   getSpecificActivity,
   updateDay,
 } from "@/utils/supabase/supabaseRequests";
@@ -64,6 +65,7 @@ import {
 import {
   EllipsisVertical,
   Info,
+  Loader,
   Map,
   Minus,
   Plus,
@@ -140,7 +142,6 @@ const ItineraryPage: FC<FetchTripData> = ({
     // Filter activities on state change
     if (selectedDay) {
       const activities = tripActivities?.filter((i) => i.day === +selectedDay);
-      console.log("Activity Filter UseEffect ran.");
 
       activities?.sort((a, b) => {
         return (
@@ -316,7 +317,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                 </SelectTrigger>
                 <SelectContent>
                   {Array.from(
-                    { length: itineraryDetails?.days_count },
+                    { length: itineraryDetails?.days_count || 0 },
                     (_, i) => (
                       <SelectItem key={i + 1} value={`${i + 1}`}>
                         Day {i + 1}
@@ -435,7 +436,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                         <DropdownMenuContent>
                           <DropdownMenuItem className="cursor-pointer">
                             <Trash className="mr-2 h-4 w-4" />
-                            <span>Delete Activities</span>
+                            <span>Delete all activities</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -461,6 +462,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                         key={a.id}
                         activities={a}
                         userRole={userRole}
+                        onSuccess={() => syncWithDatabase()}
                       />
                     ))}
                     {(userRole === "owner" || userRole === "edit") && (
@@ -512,15 +514,17 @@ interface Time {
 const ActivityCard = ({
   activities,
   userRole,
+  onSuccess,
 }: {
   activities: Activities;
   userRole: UserRole;
+  onSuccess: () => void;
 }) => {
   const { name, time, address, description, id: activityId } = activities;
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [deleteAlert, setDeleteAlert] = useState(false);
-  const { editData, setEditData, editActivity, requestComplete } =
+  const { editData, setEditData, editActivity, getToken } =
     useActivitiesContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -540,6 +544,23 @@ const ActivityCard = ({
 
   async function handleEditSubmit() {
     setIsSubmitting(true);
+
+    if (
+      editData.name === name &&
+      editData.address === address &&
+      editData.time === time &&
+      editData.description === description
+    ) {
+      toast({
+        title: "No changes were made",
+        description: "Your activity details remain the same.",
+        variant: "default",
+      });
+      setIsEditOpen(false);
+      setIsSubmitting(false);
+      return;
+    }
+
     const result = await editActivity({ activityId });
     if (!result) {
       setIsSubmitting(false);
@@ -558,6 +579,23 @@ const ActivityCard = ({
       setIsEditOpen(false);
       setIsSubmitting(false);
     }
+  }
+
+  async function handleDeleteActivity() {
+    const token = await getToken({ template: "lakbai-supabase" });
+    const error = await deleteActivity({ token, activityId });
+
+    if (error && error.message) {
+      toast({
+        title: "Deletion failed.",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Update the state with database
+    onSuccess();
+    return;
   }
 
   useEffect(() => {
@@ -649,6 +687,7 @@ const ActivityCard = ({
         </SheetContent>
       </Sheet>
 
+      {/* Activity Options Button */}
       {(userRole === "owner" || userRole === "edit") && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -689,6 +728,27 @@ const ActivityCard = ({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+      )}
+
+      {/* Delete Activity Alert Dialog */}
+      {(userRole === "owner" || userRole === "edit") && (
+        <AlertDialog open={deleteAlert} onOpenChange={setDeleteAlert}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will delete the currently selected activity. This action
+                cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteActivity}>
+                Continue
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
 
       {/* [EDIT] Editing Screen */}
@@ -833,30 +893,18 @@ const ActivityCard = ({
             </div>
             <SheetFooter>
               <Button disabled={isSubmitting} onClick={handleEditSubmit}>
-                {isSubmitting ? "Updating.." : "Save changes"}
+                {isSubmitting ? (
+                  <div className="flex space-x-2 justify-center items-center">
+                    <Loader width={12} height={12} className="animate-spin" />
+                    <span>Updating..</span>
+                  </div>
+                ) : (
+                  "Save changes"
+                )}
               </Button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
-      )}
-
-      {/* Delete Activity Alert Dialog */}
-      {(userRole === "owner" || userRole === "edit") && (
-        <AlertDialog open={deleteAlert} onOpenChange={setDeleteAlert}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will delete the currently selected activity. This action
-                cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction>Continue</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       )}
     </div>
   );

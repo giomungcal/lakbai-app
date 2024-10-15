@@ -20,7 +20,6 @@ import {
   ReactNode,
   SetStateAction,
   useContext,
-  useEffect,
   useState,
 } from "react";
 import { Database } from "../../../database.types";
@@ -32,9 +31,16 @@ interface ContextProviderProps {
 type ItineraryDetails = Database["public"]["Tables"]["itineraries"]["Insert"];
 type ActivitiesDetails = Database["public"]["Tables"]["activities"]["Row"];
 
+interface GetTokenOptions {
+  template?: string;
+  organizationId?: string;
+  leewayInSeconds?: number;
+  skipCache?: boolean;
+}
+
 interface TripsContext {
   userId: string | null | undefined;
-  getToken: any;
+  getToken: (options?: GetTokenOptions) => Promise<string | null>;
 
   startDate: Date;
   setStartDate: Dispatch<SetStateAction<Date>>;
@@ -152,6 +158,9 @@ interface AddActivity {
 }
 
 interface ActivitiesContext {
+  userId: string | null | undefined;
+  getToken: (options?: GetTokenOptions) => Promise<string | null>;
+
   activityData: ActivityData;
   setActivityData: Dispatch<SetStateAction<ActivityData>>;
   submitTrip: ({
@@ -163,7 +172,7 @@ interface ActivitiesContext {
   requestComplete: boolean;
 
   editData: EditData;
-  setEditData: Dispatch<SetStateAction<EditData | null>>;
+  setEditData: Dispatch<SetStateAction<EditData>>;
   editActivity: ({
     activityId,
   }: {
@@ -213,7 +222,7 @@ const ActivitiesContext = createContext<ActivitiesContext | null>(null);
 export const ActivitiesContextProvider = ({
   children,
 }: ContextProviderProps) => {
-  const { getToken } = useTripsContext();
+  const { userId, getToken } = useTripsContext();
   const [activityData, setActivityData] =
     useState<ActivityData>(defaultActivityData);
   const [editData, setEditData] = useState<EditData>(defaultEditData);
@@ -265,7 +274,6 @@ export const ActivitiesContextProvider = ({
     if (result) {
       setEditData(defaultEditData);
       setRequestComplete((prev) => !prev);
-      console.log(result);
       return result;
     }
     return;
@@ -274,6 +282,9 @@ export const ActivitiesContextProvider = ({
   return (
     <ActivitiesContext.Provider
       value={{
+        userId,
+        getToken,
+
         activityData,
         setActivityData,
         submitTrip,

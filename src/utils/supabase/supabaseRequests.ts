@@ -46,7 +46,12 @@ interface AddActivity {
 interface UpdateActivity {
   token: string | null;
   activityId: number;
-  editData: UpdateData | null;
+  editData: UpdateData;
+}
+
+interface DeleteActivity {
+  token: string | null;
+  activityId: number;
 }
 
 type ItineraryType = Itinerary[];
@@ -210,11 +215,7 @@ export const updateDay = async ({
       .eq("id", itineraryId)
       .select();
     if (error) {
-      toast({
-        title: "Insertion Error. Try again later.",
-        description: `Failed to add new day: ${error.message}`,
-        variant: "destructive",
-      });
+      console.error("Insertion Error. Try again later.");
       return;
     }
     return data;
@@ -226,11 +227,7 @@ export const updateDay = async ({
       .select();
 
     if (error) {
-      toast({
-        title: "Insertion Error. Try again later.",
-        description: `Failed to remove latest day: ${error.message}`,
-        variant: "destructive",
-      });
+      console.error("Deletion Error. Try again later.");
       return;
     }
     return data;
@@ -289,4 +286,17 @@ export const updateActivity = async ({
   }
 
   return data;
+};
+
+export const deleteActivity = async ({ token, activityId }: DeleteActivity) => {
+  const supabase = await supabaseClient(token);
+  const { error } = await supabase
+    .from("activities")
+    .delete()
+    .eq("id", activityId);
+
+  if (error) {
+    console.error("");
+    return error;
+  }
 };
