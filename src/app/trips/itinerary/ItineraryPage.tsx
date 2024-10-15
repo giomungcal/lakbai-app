@@ -3,6 +3,7 @@
 import {
   defaultActivityData,
   useActivitiesContext,
+  useTripsContext,
 } from "@/app/_context/AppContext";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 import {
@@ -17,7 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,12 +54,13 @@ import {
   HOURS,
   HourType,
   MAX_DAYS,
+  MINUTE,
   MinuteType,
   NUMBER_OF_PEOPLE,
+  PERIOD,
   PeriodType,
   UserRole,
 } from "@/validators/options";
-import { useAuth } from "@clerk/nextjs";
 import {
   EllipsisVertical,
   Info,
@@ -69,6 +71,7 @@ import {
   Trash,
   TriangleAlert,
 } from "lucide-react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
@@ -84,7 +87,7 @@ const ItineraryPage: FC<FetchTripData> = ({
   itinerary,
   userRole,
 }) => {
-  const { userId, getToken } = useAuth();
+  const { getToken } = useTripsContext();
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   const [itineraryDetails, setItineraryDetails] =
@@ -106,11 +109,11 @@ const ItineraryPage: FC<FetchTripData> = ({
     Activities[] | null
   >([]);
 
-  const { isSuccess } = useActivitiesContext();
+  const { requestComplete } = useActivitiesContext();
 
   // Set selectedDay based on URL on mount
   useEffect(() => {
-    let dayParam = searchParams.get("day");
+    const dayParam = searchParams.get("day");
 
     if (
       dayParam &&
@@ -152,12 +155,11 @@ const ItineraryPage: FC<FetchTripData> = ({
         setFilteredActivities([]);
       }
     }
-  }, [selectedDay, tripActivities]);
+  }, [selectedDay, tripActivities, itineraryDetails?.id]);
 
   useEffect(() => {
     syncWithDatabase();
-    console.log("Sync UseEffect ran.");
-  }, [isSuccess]);
+  }, [requestComplete]);
 
   const syncWithDatabase = async () => {
     const token = await getToken({ template: "lakbai-supabase" });
@@ -389,7 +391,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                   button.
                 </p>
               ) : (
-                <p className="text-sm opacity-60">It's empty in here..</p>
+                <p className="text-sm opacity-60">It&apos;s empty in here..</p>
               )}
             </div>
           )}
@@ -475,7 +477,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                   </div>
                 )}
 
-                {/* Reminder */}
+                {/* Reminder Message */}
                 <div className="flex flex-col md:flex-row items-center space-x-2 p-4 rounded-xl border-ring border-1 border-dashed bg-primary">
                   <div className="flex items-center space-x-2">
                     <Info
@@ -488,8 +490,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                     </span>
                   </div>
                   <p className="text-title/60">
-                    Clicking the activity opens its location on Google Maps in a
-                    new tab.
+                    Click on each activity to display its full details.
                   </p>
                 </div>
               </section>
@@ -502,6 +503,12 @@ const ItineraryPage: FC<FetchTripData> = ({
 
 export default ItineraryPage;
 
+interface Time {
+  hour: string;
+  minute: string;
+  period: string;
+}
+
 const ActivityCard = ({
   activities,
   userRole,
@@ -509,36 +516,138 @@ const ActivityCard = ({
   activities: Activities;
   userRole: UserRole;
 }) => {
-  const { name, time, address, description } = activities;
+  const { name, time, address, description, id: activityId } = activities;
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isViewOpen, setIsViewOpen] = useState(false);
   const [deleteAlert, setDeleteAlert] = useState(false);
+  const { editData, setEditData, editActivity, requestComplete } =
+    useActivitiesContext();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const timeHour = time && time.split(":")[0];
+  const timeMinute = time && time.split(":")[1].split(" ")[0];
+  const timePeriod = time && time.split(" ")[1];
+  const [editTime, setEditTime] = useState<Time>({
+    hour: timeHour ?? "8",
+    minute: timeMinute ?? "00",
+    period: timePeriod ?? "AM",
+  });
+
+  function handleEditData() {
+    setIsEditOpen(true);
+    setEditData({ name, time, address, description });
+  }
+
+  async function handleEditSubmit() {
+    setIsSubmitting(true);
+    const result = await editActivity({ activityId });
+    if (!result) {
+      setIsSubmitting(false);
+      setEditData({ name, time, address, description });
+
+      toast({
+        title: "Update Error",
+        description:
+          "There has been an error updating the activity. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (result.length >= 1) {
+      setIsEditOpen(false);
+      setIsSubmitting(false);
+    }
+  }
+
+  useEffect(() => {
+    const time = `${editTime.hour}:${editTime.minute} ${editTime.period}`;
+    setEditData((prev) => ({ ...prev, time }));
+  }, [editTime, setEditData]);
 
   return (
     <div
       className={`relative w-full h-full flex items-center space-x-4 bg-card border-accent border-2 rounded-2xl p-6 hover:bg-primary/50 transition-all cursor-pointer`}
     >
-      {/* Link to Google Maps */}
-
+      {/* Card Details */}
       <div className=" flex-grow text-left space-y-1 pr-6">
         <p className="text-sm text-muted-foreground font-semibold">{time}</p>
         <h2 className="text-title text-xl font-extrabold">{name}</h2>
         <p className="text-xs text-muted-foreground font-medium line-clamp-2">
           {address}
         </p>
-        {/* Removed line-clamp-2 on description */}
         <p className="text-sm text-card-foreground line-clamp-2">
           {description}
         </p>
       </div>
 
-      <a
-        href={`https://www.google.com/maps/search/?api=1&query=${encodeURI(
-          address!
-        )}`}
-        target="_blank"
-        rel="noopener noreferrer"
+      {/* View Details Button (whole card) */}
+      <div
+        onClick={() => setIsViewOpen(true)}
         className="absolute inset-0 z-10"
       />
+
+      {/* [VIEW] Activity Detail Sheet  */}
+      <Sheet open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <SheetContent className="overflow-auto">
+          <SheetHeader>
+            <SheetTitle>Activity Details</SheetTitle>
+            <SheetDescription>
+              View of the full details of the selected activity.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="name" className="text-left">
+                Name
+              </Label>
+              <div className="flex items-center justify-start text-sm col-span-3 bg-card/35 border-border border-2 p-3 rounded-lg">
+                <p>{name}</p>
+              </div>
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="username" className="text-left">
+                Location
+              </Label>
+              <div className="flex items-center justify-start text-sm col-span-3 bg-card/35 border-border border-2 p-3 rounded-lg">
+                <p>{address}</p>
+              </div>
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="username" className="text-left">
+                Time
+              </Label>
+              <div className="flex items-center justify-start text-sm col-span-3 bg-card/35 border-border border-2 p-3 rounded-lg">
+                <p>{time}</p>
+              </div>
+            </div>
+            <div className="flex flex-col space-y-2">
+              <Label htmlFor="username" className="text-left">
+                Description
+              </Label>
+              <div className="flex items-center justify-start text-sm col-span-3 bg-card/35 border-border border-2 p-3 rounded-lg">
+                <p>
+                  {description || description!.length >= 1
+                    ? description
+                    : "No description for this activity."}
+                </p>
+              </div>
+            </div>
+          </div>
+          <SheetFooter>
+            <Link
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURI(
+                address!
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: "default" })}
+            >
+              See Location
+            </Link>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       {(userRole === "owner" || userRole === "edit") && (
         <DropdownMenu>
@@ -550,7 +659,7 @@ const ActivityCard = ({
           <DropdownMenuContent>
             <DropdownMenuItem
               className="cursor-pointer"
-              onSelect={() => setIsEditOpen(true)}
+              onSelect={handleEditData}
             >
               <SquarePen className="mr-2 h-4 w-4" />
               <span>Edit Activity</span>
@@ -582,14 +691,15 @@ const ActivityCard = ({
         </DropdownMenu>
       )}
 
-      {/* Editing Screen */}
+      {/* [EDIT] Editing Screen */}
       {(userRole === "owner" || userRole === "edit") && (
         <Sheet open={isEditOpen} onOpenChange={setIsEditOpen}>
           <SheetContent className="max-w-[940px]">
             <SheetHeader>
               <SheetTitle>Edit activity</SheetTitle>
               <SheetDescription>
-                Make changes to this activity here. Click save when you're done.
+                Make changes to this activity here. Click save when you&apos;re
+                done.
               </SheetDescription>
             </SheetHeader>
             <div className="grid gap-4 py-4">
@@ -597,39 +707,134 @@ const ActivityCard = ({
                 <Label htmlFor="name" className="text-right">
                   Name
                 </Label>
-                <Input id="name" value={name ?? ""} className="col-span-3" />
+                <Input
+                  disabled={isSubmitting}
+                  id="name"
+                  className="col-span-3"
+                  value={editData.name ?? ""}
+                  onChange={(e) =>
+                    setEditData((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="username" className="text-right">
                   Location
                 </Label>
-                <Input
-                  id="username"
-                  value={address ?? ""}
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <GooglePlacesAutocomplete
+                    apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
+                    selectProps={{
+                      isDisabled: isSubmitting,
+
+                      placeholder: editData.address ?? "",
+                      onChange: (value) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          address: value!.label,
+                        })),
+                    }}
+                  />
+                </div>
               </div>
+
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="username" className="text-right">
+                <Label htmlFor="framework" className="col-span-1 text-right">
                   Time
                 </Label>
-                <Input id="username" value="10:00 AM" className="col-span-3" />
+
+                {/* Hour */}
+                <Select
+                  disabled={isSubmitting}
+                  value={editTime.hour}
+                  onValueChange={(value) =>
+                    setEditTime((prev) => ({
+                      ...prev,
+                      hour: value as HourType,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="framework">
+                    <SelectValue placeholder="00" />
+                  </SelectTrigger>
+                  <SelectContent className="col-span-1" position="popper">
+                    {HOURS.map((i) => (
+                      <SelectItem key={i} value={i}>
+                        {i}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Minute */}
+                <Select
+                  disabled={isSubmitting}
+                  value={editTime.minute}
+                  onValueChange={(value) =>
+                    setEditTime((prev) => ({
+                      ...prev,
+                      minute: value as MinuteType,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="framework">
+                    <SelectValue placeholder="00" />
+                  </SelectTrigger>
+                  <SelectContent className="col-span-1" position="popper">
+                    {MINUTE.map((i) => (
+                      <SelectItem key={i} value={i}>
+                        {i}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Period */}
+                <Select
+                  disabled={isSubmitting}
+                  value={editTime.period}
+                  onValueChange={(value) =>
+                    setEditTime((prev) => ({
+                      ...prev,
+                      period: value as PeriodType,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="framework">
+                    <SelectValue placeholder="AM" />
+                  </SelectTrigger>
+                  <SelectContent className="col-span-1" position="popper">
+                    {PERIOD.map((i) => (
+                      <SelectItem key={i} value={i}>
+                        {i}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
               <div className="grid grid-cols-4 items-start  gap-4">
                 <Label htmlFor="username" className="text-right mt-2">
                   Description
                 </Label>
                 <Textarea
+                  disabled={isSubmitting}
                   id="username"
-                  value={description ?? ""}
                   className="col-span-3"
+                  value={editData.description ?? ""}
+                  onChange={(e) =>
+                    setEditData((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
                 />
               </div>
             </div>
             <SheetFooter>
-              <SheetClose asChild>
-                <Button type="submit">Save changes</Button>
-              </SheetClose>
+              <Button disabled={isSubmitting} onClick={handleEditSubmit}>
+                {isSubmitting ? "Updating.." : "Save changes"}
+              </Button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
@@ -659,14 +864,9 @@ const ActivityCard = ({
 
 interface AddActivitySheet {
   isAddActivityOpen: boolean;
-}
-
-interface AddActivitySheet {
-  isAddActivityOpen: boolean;
   setIsAddActivityOpen: Dispatch<SetStateAction<boolean>>;
   itineraryId: string | undefined;
   selectedDay: string;
-  setTripActivities: Dispatch<SetStateAction<Activities[]>>;
 }
 
 const AddActivitySheet = ({
@@ -688,7 +888,7 @@ const AddActivitySheet = ({
       setActivityData(defaultActivityData);
       setIsFormComplete(null);
     }
-  }, [isAddActivityOpen]);
+  }, [isAddActivityOpen, setActivityData, setIsFormComplete]);
 
   async function handleSubmitActivity() {
     const result = await submitTrip({ itineraryId, day });
@@ -708,7 +908,7 @@ const AddActivitySheet = ({
         <SheetHeader>
           <SheetTitle>Add activity</SheetTitle>
           <SheetDescription>
-            Add details to your activity here. Click save when you're done.
+            Add details to your activity here. Click save when you&apos;re done.
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-4 py-4">
@@ -782,10 +982,11 @@ const AddActivitySheet = ({
                 <SelectValue placeholder="00" />
               </SelectTrigger>
               <SelectContent className="col-span-1" position="popper">
-                <SelectItem value="00">00</SelectItem>
-                <SelectItem value="15">15</SelectItem>
-                <SelectItem value="30">30</SelectItem>
-                <SelectItem value="45">45</SelectItem>
+                {MINUTE.map((i) => (
+                  <SelectItem key={i} value={i}>
+                    {i}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select
@@ -801,8 +1002,11 @@ const AddActivitySheet = ({
                 <SelectValue placeholder="AM" />
               </SelectTrigger>
               <SelectContent className="col-span-1" position="popper">
-                <SelectItem value="AM">AM</SelectItem>
-                <SelectItem value="PM">PM</SelectItem>
+                {PERIOD.map((i) => (
+                  <SelectItem key={i} value={i}>
+                    {i}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

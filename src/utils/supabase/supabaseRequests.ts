@@ -10,6 +10,7 @@ type AddItineraryType = Database["public"]["Tables"]["itineraries"]["Insert"];
 type Itinerary = Database["public"]["Tables"]["itineraries"]["Row"];
 type Activities = Database["public"]["Tables"]["activities"]["Row"];
 type UserRoles = Database["public"]["Tables"]["user_roles"]["Row"];
+type UpdateData = Database["public"]["Tables"]["activities"]["Update"];
 
 interface AddItinerary {
   userId: string;
@@ -29,7 +30,7 @@ interface GetUserRoles {
 }
 
 interface UpdateDay {
-  token: string;
+  token: string | null;
   action: "add" | "delete";
   day: number;
   itineraryId: string;
@@ -42,11 +43,14 @@ interface AddActivity {
   itineraryId: string | undefined;
 }
 
+interface UpdateActivity {
+  token: string | null;
+  activityId: number;
+  editData: UpdateData | null;
+}
+
 type ItineraryType = Itinerary[];
 type ActivitiesType = Activities[];
-
-// User Roles Fetching
-// Gets all the entries where userId has wither "view" or "edit" access
 
 export const getUserRoles = async ({
   userId,
@@ -69,8 +73,6 @@ export const getUserRoles = async ({
 
   return userRoles;
 };
-
-// Itinerary Requests
 
 export const getItineraries = async ({
   userId,
@@ -255,7 +257,32 @@ export const addActivity = async ({
 
   if (error) {
     console.error(
-      "There has been an error fetching the data from Supabase: ",
+      "There has been an error inserting the data from Supabase: ",
+      error.message
+    );
+    return;
+  }
+
+  return data;
+};
+
+export const updateActivity = async ({
+  token,
+  activityId,
+  editData,
+}: UpdateActivity): Promise<UpdateData[] | undefined> => {
+  const { name, time, address, description } = editData;
+
+  const supabase = await supabaseClient(token);
+  const { data, error } = await supabase
+    .from("activities")
+    .update({ name, time, address, description })
+    .eq("id", activityId)
+    .select();
+
+  if (error) {
+    console.error(
+      "There has been an error updating the data in Supabase: ",
       error.message
     );
     return;
