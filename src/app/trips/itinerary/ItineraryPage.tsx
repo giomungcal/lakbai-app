@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  defaultActivityData,
-  useActivitiesContext,
-} from "@/app/_context/AppContext";
+import { useTripsContext } from "@/app/_context/AppContext";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 import {
   AlertDialog,
@@ -46,6 +43,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import {
+  addActivity,
   getSpecificActivity,
   updateDay,
 } from "@/utils/supabase/supabaseRequests";
@@ -70,7 +68,14 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
+import {
+  Dispatch,
+  FC,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import { useMediaQuery } from "usehooks-ts";
 import { Database } from "../../../../database.types";
@@ -102,11 +107,11 @@ const ItineraryPage: FC<FetchTripData> = ({
 
   const searchParams = useSearchParams();
   const [selectedDay, setSelectedDay] = useState<string | null>();
-  const [filteredActivities, setFilteredActivities] = useState<
-    Activities[] | null
-  >([]);
+  // const [filteredActivities, setFilteredActivities] = useState<
+  //   Activities[] | null
+  // >([]);
 
-  const { isSuccess } = useActivitiesContext();
+  // const { isSuccess } = useActivitiesContext();
 
   // Set selectedDay based on URL on mount
   useEffect(() => {
@@ -133,31 +138,24 @@ const ItineraryPage: FC<FetchTripData> = ({
         `?id=${itineraryDetails?.id}&day=${selectedDay}`
       );
     }
+  }, [selectedDay]);
 
-    // Filter activities on state change
-    if (selectedDay) {
-      const activities = tripActivities?.filter((i) => i.day === +selectedDay);
-      console.log("Activity Filter UseEffect ran.");
+  const filteredActivities = useMemo(() => {
+    if (!selectedDay || !tripActivities) return [];
 
-      activities?.sort((a, b) => {
-        return (
-          new Date(`2024/10/${a.day} ${a.time}`).getTime() -
-          new Date(`2024/10/${a.day} ${b.time}`).getTime()
-        );
-      });
+    // Filter activities
+    const activities = tripActivities.filter((i) => i.day === +selectedDay);
 
-      if (activities && activities.length > 0) {
-        setFilteredActivities(activities);
-      } else {
-        setFilteredActivities([]);
-      }
-    }
+    // Sort activities by time
+    activities.sort((a, b) => {
+      return (
+        new Date(`2024/10/${a.day} ${a.time}`).getTime() -
+        new Date(`2024/10/${b.day} ${b.time}`).getTime()
+      );
+    });
+
+    return activities;
   }, [selectedDay, tripActivities]);
-
-  useEffect(() => {
-    syncWithDatabase();
-    console.log("Sync UseEffect ran.");
-  }, [isSuccess]);
 
   const syncWithDatabase = async () => {
     const token = await getToken({ template: "lakbai-supabase" });
@@ -313,6 +311,11 @@ const ItineraryPage: FC<FetchTripData> = ({
                   />
                 </SelectTrigger>
                 <SelectContent>
+                  {itineraryDetails?.days_count === 0 && (
+                    <div className="w-full h-8 flex text-sm  text-foreground/70 select-none justify-center items-center">
+                      <span>No entries yet</span>
+                    </div>
+                  )}
                   {Array.from(
                     { length: itineraryDetails?.days_count },
                     (_, i) => (
@@ -389,7 +392,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                   button.
                 </p>
               ) : (
-                <p className="text-sm opacity-60">It's empty in here..</p>
+                <p className="text-sm opacity-60">It&apos;s empty in here..</p>
               )}
             </div>
           )}
@@ -418,6 +421,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                         setIsAddActivityOpen={setIsAddActivityOpen}
                         itineraryId={itineraryDetails?.id}
                         selectedDay={selectedDay}
+                        onSuccess={syncWithDatabase}
                       />
 
                       <DropdownMenu>
@@ -589,7 +593,8 @@ const ActivityCard = ({
             <SheetHeader>
               <SheetTitle>Edit activity</SheetTitle>
               <SheetDescription>
-                Make changes to this activity here. Click save when you're done.
+                Make changes to this activity here. Click save when you&apos;re
+                done.
               </SheetDescription>
             </SheetHeader>
             <div className="grid gap-4 py-4">
@@ -659,14 +664,33 @@ const ActivityCard = ({
 
 interface AddActivitySheet {
   isAddActivityOpen: boolean;
-}
-
-interface AddActivitySheet {
-  isAddActivityOpen: boolean;
   setIsAddActivityOpen: Dispatch<SetStateAction<boolean>>;
   itineraryId: string | undefined;
   selectedDay: string;
-  setTripActivities: Dispatch<SetStateAction<Activities[]>>;
+  onSuccess: () => void;
+}
+
+interface ActivityData {
+  name: string;
+  address: string;
+  hour: HourType;
+  minute: MinuteType;
+  period: PeriodType;
+  description?: string;
+}
+
+const defaultActivityData: ActivityData = {
+  name: "",
+  address: "",
+  hour: "8",
+  minute: "00",
+  period: "AM",
+  description: "",
+};
+
+interface AddActivity {
+  itineraryId: string | undefined;
+  day: string;
 }
 
 const AddActivitySheet = ({
@@ -674,14 +698,45 @@ const AddActivitySheet = ({
   setIsAddActivityOpen,
   itineraryId,
   selectedDay: day,
+  onSuccess,
 }: AddActivitySheet) => {
-  const {
-    activityData,
-    setActivityData,
-    submitTrip,
-    isFormComplete,
-    setIsFormComplete,
-  } = useActivitiesContext();
+  const { getToken } = useTripsContext();
+
+  const [activityData, setActivityData] =
+    useState<ActivityData>(defaultActivityData);
+  const [isFormComplete, setIsFormComplete] = useState<boolean | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const validationForm = () => {
+    const { name, address, hour, minute, period } = activityData;
+    if (!name || !address || !hour || !minute || !period) {
+      return false;
+    } else {
+      return true;
+    }
+  };
+
+  const submitTrip = async ({ itineraryId, day }: AddActivity) => {
+    if (!validationForm()) {
+      setIsFormComplete(false);
+      return;
+    } else {
+      const token = await getToken({ template: "lakbai-supabase" });
+      const result = await addActivity({
+        token,
+        itineraryId,
+        day,
+        activityData,
+      });
+      if (result) {
+        onSuccess(); // Sync with database function is attached to this
+        setActivityData(defaultActivityData);
+        setIsFormComplete(null);
+        return result;
+      }
+      return;
+    }
+  };
 
   useEffect(() => {
     if (!isAddActivityOpen) {
@@ -692,7 +747,6 @@ const AddActivitySheet = ({
 
   async function handleSubmitActivity() {
     const result = await submitTrip({ itineraryId, day });
-    console.log(result);
     if (!result) {
       return;
     }

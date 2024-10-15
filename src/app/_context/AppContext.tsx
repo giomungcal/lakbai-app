@@ -29,6 +29,9 @@ type ItineraryDetails = Database["public"]["Tables"]["itineraries"]["Insert"];
 type ActivitiesDetails = Database["public"]["Tables"]["activities"]["Row"];
 
 interface TripsContext {
+  userId: string | null | undefined;
+  getToken: any;
+
   startDate: Date;
   setStartDate: Dispatch<SetStateAction<Date>>;
   endDate: Date;
@@ -39,17 +42,17 @@ interface TripsContext {
   setItineraryDetails: Dispatch<SetStateAction<ItineraryDetails>>;
 }
 
-interface ActivitiesContext {
-  activityData: ActivityData;
-  setActivityData: Dispatch<SetStateAction<ActivityData>>;
-  submitTrip: ({
-    itineraryId,
-    day,
-  }: AddActivity) => Promise<ActivitiesDetails[] | undefined>;
-  isFormComplete: boolean | null;
-  setIsFormComplete: Dispatch<SetStateAction<boolean | null>>;
-  isSuccess: boolean;
-}
+// interface ActivitiesContext {
+//   activityData: ActivityData;
+//   setActivityData: Dispatch<SetStateAction<ActivityData>>;
+//   submitTrip: ({
+//     itineraryId,
+//     day,
+//   }: AddActivity) => Promise<ActivitiesDetails[] | undefined>;
+//   isFormComplete: boolean | null;
+//   setIsFormComplete: Dispatch<SetStateAction<boolean | null>>;
+//   isSuccess: boolean;
+// }
 
 const defaultItinerary: ItineraryDetails = {
   address: "",
@@ -63,28 +66,28 @@ const defaultItinerary: ItineraryDetails = {
   start_date: new Date().toISOString(),
 };
 
-export interface ActivityData {
-  name: string;
-  address: string;
-  hour: HourType;
-  minute: MinuteType;
-  period: PeriodType;
-  description?: string;
-}
+// export interface ActivityData {
+//   name: string;
+//   address: string;
+//   hour: HourType;
+//   minute: MinuteType;
+//   period: PeriodType;
+//   description?: string;
+// }
 
-export const defaultActivityData: ActivityData = {
-  name: "",
-  address: "",
-  hour: "8",
-  minute: "00",
-  period: "AM",
-  description: "",
-};
+// export const defaultActivityData: ActivityData = {
+//   name: "",
+//   address: "",
+//   hour: "8",
+//   minute: "00",
+//   period: "AM",
+//   description: "",
+// };
 
-interface AddActivity {
-  itineraryId: string | undefined;
-  day: string;
-}
+// interface AddActivity {
+//   itineraryId: string | undefined;
+//   day: string;
+// }
 
 const TripsContext = createContext<TripsContext | null>(null);
 
@@ -156,6 +159,9 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
   return (
     <TripsContext.Provider
       value={{
+        userId,
+        getToken,
+
         startDate,
         setStartDate,
         endDate,
@@ -181,76 +187,72 @@ export function useTripsContext() {
   return context;
 }
 
-const ActivitiesContext = createContext<ActivitiesContext | null>(null);
+// const ActivitiesContext = createContext<ActivitiesContext | null>(null);
 
-export const ActivitiesContextProvider = ({
-  children,
-}: ContextProviderProps) => {
-  const { getToken } = useAuth();
-  const [activityData, setActivityData] =
-    useState<ActivityData>(defaultActivityData);
-  const [isFormComplete, setIsFormComplete] = useState<boolean | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
+// export const ActivitiesContextProvider = ({
+//   children,
+// }: ContextProviderProps) => {
+// const { getToken } = useAuth();
+// const [activityData, setActivityData] =
+//   useState<ActivityData>(defaultActivityData);
+// const [isFormComplete, setIsFormComplete] = useState<boolean | null>(null);
+// const [isSuccess, setIsSuccess] = useState(false);
 
-  useEffect(() => {
-    console.log(activityData);
-  }, [activityData]);
+// const validationForm = () => {
+//   const { name, address, hour, minute, period } = activityData;
+//   if (!name || !address || !hour || !minute || !period) {
+//     return false;
+//   } else {
+//     return true;
+//   }
+// };
 
-  const validationForm = () => {
-    const { name, address, hour, minute, period } = activityData;
-    if (!name || !address || !hour || !minute || !period) {
-      return false;
-    } else {
-      return true;
-    }
-  };
+// const submitTrip = async ({ itineraryId, day }: AddActivity) => {
+//   if (!validationForm()) {
+//     setIsFormComplete(false);
+//     return;
+//   } else {
+//     const token = await getToken({ template: "lakbai-supabase" });
+//     const result = await addActivity({
+//       token,
+//       itineraryId,
+//       day,
+//       activityData,
+//     });
+//     if (result) {
+//       setActivityData(defaultActivityData);
+//       setIsSuccess((prev) => !prev);
+//       setIsFormComplete(null);
+//       return result;
+//     }
+//     return;
+//   }
+// };
 
-  const submitTrip = async ({ itineraryId, day }: AddActivity) => {
-    if (!validationForm()) {
-      setIsFormComplete(false);
-      return;
-    } else {
-      const token = await getToken({ template: "lakbai-supabase" });
-      const result = await addActivity({
-        token,
-        itineraryId,
-        day,
-        activityData,
-      });
-      if (result) {
-        setActivityData(defaultActivityData);
-        setIsSuccess((prev) => !prev);
-        setIsFormComplete(null);
-        return result;
-      }
-      return;
-    }
-  };
+//   return (
+//     <ActivitiesContext.Provider
+//       value={{
+//         activityData,
+//         setActivityData,
+//         submitTrip,
+//         isFormComplete,
+//         setIsFormComplete,
+//         isSuccess,
+//       }}
+//     >
+//       {children}
+//     </ActivitiesContext.Provider>
+//   );
+// };
 
-  return (
-    <ActivitiesContext.Provider
-      value={{
-        activityData,
-        setActivityData,
-        submitTrip,
-        isFormComplete,
-        setIsFormComplete,
-        isSuccess,
-      }}
-    >
-      {children}
-    </ActivitiesContext.Provider>
-  );
-};
+// export function useActivitiesContext() {
+//   const context = useContext(ActivitiesContext);
 
-export function useActivitiesContext() {
-  const context = useContext(ActivitiesContext);
+//   if (!context) {
+//     throw new Error(
+//       "useActivitiesContext must be used within a ActivitiesContextProvider"
+//     );
+//   }
 
-  if (!context) {
-    throw new Error(
-      "useActivitiesContext must be used within a ActivitiesContextProvider"
-    );
-  }
-
-  return context;
-}
+//   return context;
+// }
