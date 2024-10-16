@@ -5,6 +5,7 @@ import {
   addActivity,
   addItinerary,
   updateActivity,
+  updateItinerary,
 } from "@/utils/supabase/supabaseRequests";
 import {
   EMOJIS,
@@ -13,13 +14,14 @@ import {
   NUMBER_OF_PEOPLE,
   PeriodType,
 } from "@/validators/options";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import {
   createContext,
   Dispatch,
   ReactNode,
   SetStateAction,
   useContext,
+  useEffect,
   useState,
 } from "react";
 import { Database } from "../../../database.types";
@@ -30,6 +32,7 @@ interface ContextProviderProps {
 
 type ItineraryDetails = Database["public"]["Tables"]["itineraries"]["Insert"];
 type ActivitiesDetails = Database["public"]["Tables"]["activities"]["Row"];
+type UpdateItinerary = Database["public"]["Tables"]["itineraries"]["Update"];
 
 interface GetTokenOptions {
   template?: string;
@@ -50,18 +53,51 @@ interface TripsContext {
   addTrip: () => Promise<ItineraryDetails[] | undefined>;
   itineraryDetails: ItineraryDetails;
   setItineraryDetails: Dispatch<SetStateAction<ItineraryDetails>>;
+
+  editTripData: UpdateItinerary;
+  setEditTripData: Dispatch<SetStateAction<UpdateItinerary>>;
+  editTrip: (itineraryId: string) => Promise<UpdateItinerary[] | undefined>;
 }
+
+const defaultItinerary: ItineraryDetails = {
+  id: "",
+  name: "",
+  address: "",
+  emoji: EMOJIS[0]["value"],
+  start_date: new Date().toISOString(),
+  end_date: new Date().toISOString(),
+  num_of_people: NUMBER_OF_PEOPLE[1]["value"],
+  owner_id: "",
+  is_created_by_lakbai: false,
+};
+
+const defaultItineraryEdit: UpdateItinerary = {
+  name: "",
+  address: "",
+  emoji: "",
+  days_count: 0,
+  start_date: "",
+  end_date: "",
+  num_of_people: "",
+};
 
 const TripsContext = createContext<TripsContext | null>(null);
 
 export const TripsContextProvider = ({ children }: ContextProviderProps) => {
   const { userId, getToken } = useAuth();
+  const { user } = useUser();
 
   const [itineraryDetails, setItineraryDetails] =
     useState<ItineraryDetails>(defaultItinerary);
+  const [editTripData, setEditTripData] =
+    useState<UpdateItinerary>(defaultItineraryEdit);
 
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
+
+  useEffect(() => {
+    console.log(itineraryDetails);
+  }, [itineraryDetails]);
 
   function validationForm() {
     const { name, address, emoji, start_date, end_date, num_of_people } =
@@ -119,6 +155,16 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
     }
   }
 
+  async function editTrip(itineraryId: string) {
+    const token = await getToken({ template: "lakbai-supabase" });
+    const result = await updateItinerary({
+      token,
+      itineraryId,
+      editTripData,
+    });
+    return result;
+  }
+
   return (
     <TripsContext.Provider
       value={{
@@ -133,6 +179,10 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
         addTrip,
         itineraryDetails,
         setItineraryDetails,
+
+        editTripData,
+        setEditTripData,
+        editTrip,
       }}
     >
       {children}
@@ -180,18 +230,6 @@ interface ActivitiesContext {
   }) => Promise<EditData[] | undefined>;
 }
 
-const defaultItinerary: ItineraryDetails = {
-  address: "",
-  emoji: EMOJIS[0]["value"],
-  end_date: new Date().toISOString(),
-  id: "",
-  is_created_by_lakbai: false,
-  name: "",
-  num_of_people: NUMBER_OF_PEOPLE[1]["value"],
-  owner_id: "",
-  start_date: new Date().toISOString(),
-};
-
 export interface ActivityData {
   name: string;
   address: string;
@@ -201,7 +239,7 @@ export interface ActivityData {
   description?: string;
 }
 
-export const defaultActivityData: ActivityData = {
+export const defaultActivityAdd: ActivityData = {
   name: "",
   address: "",
   hour: "8",
@@ -210,7 +248,7 @@ export const defaultActivityData: ActivityData = {
   description: "",
 };
 
-export const defaultEditData: EditData = {
+export const defaultActivityEdit: EditData = {
   name: "",
   address: "",
   time: "8:00 AM",
@@ -224,8 +262,8 @@ export const ActivitiesContextProvider = ({
 }: ContextProviderProps) => {
   const { userId, getToken } = useTripsContext();
   const [activityData, setActivityData] =
-    useState<ActivityData>(defaultActivityData);
-  const [editData, setEditData] = useState<EditData>(defaultEditData);
+    useState<ActivityData>(defaultActivityAdd);
+  const [editData, setEditData] = useState<EditData>(defaultActivityEdit);
   const [isFormComplete, setIsFormComplete] = useState<boolean | null>(null);
   const [requestComplete, setRequestComplete] = useState(false);
 
@@ -255,7 +293,7 @@ export const ActivitiesContextProvider = ({
         activityData,
       });
       if (result) {
-        setActivityData(defaultActivityData);
+        setActivityData(defaultActivityAdd);
         setRequestComplete((prev) => !prev);
         setIsFormComplete(null);
         return result;
@@ -272,7 +310,7 @@ export const ActivitiesContextProvider = ({
       editData,
     });
     if (result) {
-      setEditData(defaultEditData);
+      setEditData(defaultActivityEdit);
       setRequestComplete((prev) => !prev);
       return result;
     }

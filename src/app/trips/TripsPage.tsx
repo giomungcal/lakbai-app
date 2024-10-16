@@ -130,7 +130,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
 
   async function handleTripSave() {
     const result = await addTrip();
-    if (result.length !== 0) setOpenTripDetails(false);
+    if (result && result.length !== 0) setOpenTripDetails(false);
 
     // Update list when a new trip is added
     syncTripsWithDatabase();
@@ -248,21 +248,9 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                   (i) => i.value === number
                 );
 
-                const [startYear, startMonth, startDay] = dateStart
-                  .split("-")
-                  .map((i) => Number(i));
-                const [endYear, endMonth, endDay] = dateEnd
-                  .split("-")
-                  .map((i) => Number(i));
-
-                const dateStartFormatted = format(
-                  new Date(startYear, startMonth, startDay),
-                  "PP"
-                );
-                const dateEndFormatted = format(
-                  new Date(endYear, endMonth, endDay),
-                  "PP"
-                );
+                const dateStartFormatted = format(new Date(dateStart), "PP");
+                const dateEndFormatted = format(new Date(dateEnd), "PP");
+                const emojiObject = EMOJIS.find((i) => i.value === emoji);
 
                 return (
                   <div
@@ -275,7 +263,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                     />
                     <div className="flex flex-col space-y-2">
                       <div className="flex space-x-2 text-xl font-bold">
-                        <span>{emoji}</span>
+                        <span>{emojiObject?.emoji ?? "🧛‍♀️"}</span>
                         <h2 className="truncate">{name}</h2>
                       </div>
 
@@ -315,17 +303,6 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                 );
               }
             )}
-          {/* <Button
-            onClick={() => {
-              setOpenTripDetails(true);
-            }}
-            variant="outline"
-            className="h-full min-h-[100px] flex items-center justify-center border-2 rounded-2xl border-dashed border-border cursor-pointer hover:bg-accent/25"
-          >
-            <p className="font-medium text-base text-foreground/60">
-              + add trip
-            </p>
-          </Button> */}
         </section>
       )}
     </MaxWidthWrapper>
@@ -421,12 +398,14 @@ function AddTripForm({ className }: { className: string }) {
               <Calendar
                 mode="single"
                 selected={startDate}
-                onSelect={(value: Date) => {
-                  setStartDate(value);
-                  setItineraryDetails((prev) => ({
-                    ...prev,
-                    end_date: value.toISOString(),
-                  }));
+                onSelect={(value) => {
+                  if (value) {
+                    setStartDate(value);
+                    setItineraryDetails((prev) => ({
+                      ...prev,
+                      start_date: value.toLocaleDateString(),
+                    }));
+                  }
                 }}
                 initialFocus
               />
@@ -453,12 +432,14 @@ function AddTripForm({ className }: { className: string }) {
               <Calendar
                 mode="single"
                 selected={endDate}
-                onSelect={(value: Date) => {
-                  setEndDate(value);
-                  setItineraryDetails((prev) => ({
-                    ...prev,
-                    start_date: value.toISOString(),
-                  }));
+                onSelect={(value) => {
+                  if (value) {
+                    setEndDate(value);
+                    setItineraryDetails((prev) => ({
+                      ...prev,
+                      end_date: value.toLocaleDateString(),
+                    }));
+                  }
                 }}
                 initialFocus
               />

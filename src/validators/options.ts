@@ -7,15 +7,14 @@ export type EmojiEntry = {
 
 export const EMOJIS = [
   { value: "Beach", emoji: "🏖️" },
-  { value: "Mountains", emoji: "🏔️" },
-  { value: "City", emoji: "🏙️" },
+  { value: "Mountains", emoji: "🌄" },
+  { value: "City", emoji: "🌃" },
   { value: "Island", emoji: "🏝️" },
-  { value: "Camping", emoji: "🏕️" },
-  { value: "Cruise", emoji: "🛳️" },
-  { value: "Transit", emoji: "🚎" },
-  { value: "Theme Park", emoji: "🎢" },
-  { value: "Lake", emoji: "🛶" },
-  { value: "Desert", emoji: "🏜️" },
+  { value: "Camping", emoji: "⛺" },
+  { value: "Water", emoji: "🐋" },
+  { value: "ThemePark", emoji: "🎢" },
+  { value: "Jungle", emoji: "🦜" },
+  { value: "Party", emoji: "👽" },
 ] as const;
 
 export type EmojiValue = (typeof EMOJIS)[number]["value"];

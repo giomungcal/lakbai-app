@@ -8,9 +8,11 @@ import { supabaseClient } from "./supabaseClient";
 
 type AddItineraryType = Database["public"]["Tables"]["itineraries"]["Insert"];
 type Itinerary = Database["public"]["Tables"]["itineraries"]["Row"];
+type UpdateItineraryData =
+  Database["public"]["Tables"]["itineraries"]["Update"];
 type Activities = Database["public"]["Tables"]["activities"]["Row"];
 type UserRoles = Database["public"]["Tables"]["user_roles"]["Row"];
-type UpdateData = Database["public"]["Tables"]["activities"]["Update"];
+type UpdateActivityData = Database["public"]["Tables"]["activities"]["Update"];
 
 interface AddItinerary {
   userId: string;
@@ -21,6 +23,12 @@ interface AddItinerary {
 interface DeleteItinerary {
   token: string | null;
   itineraryId: string | undefined;
+}
+
+interface UpdateItinerary {
+  token: string | null;
+  itineraryId: string;
+  editTripData: UpdateItineraryData;
 }
 
 interface GetSpecific {
@@ -51,7 +59,7 @@ interface AddActivity {
 interface UpdateActivity {
   token: string | null;
   activityId: number;
-  editData: UpdateData;
+  editData: UpdateActivityData;
 }
 
 interface DeleteActivity {
@@ -190,8 +198,7 @@ export const addItinerary = async ({
 }: AddItinerary): Promise<ItineraryType | undefined> => {
   const { name, address, emoji, start_date, end_date, num_of_people } =
     itineraryDetails;
-  const emojiObject = EMOJIS.find((e) => e.value === emoji);
-  const emojiDisplay = emojiObject ? emojiObject.emoji : "👽";
+
   const uuidString: string = uuidv4();
 
   const supabase = await supabaseClient(token);
@@ -202,7 +209,7 @@ export const addItinerary = async ({
         id: uuidString,
         name,
         address,
-        emoji: emojiDisplay,
+        emoji,
         start_date,
         end_date,
         is_created_by_lakbai: false,
@@ -221,6 +228,46 @@ export const addItinerary = async ({
     return;
   }
 
+  return data;
+};
+
+export const updateItinerary = async ({
+  token,
+  itineraryId,
+  editTripData,
+}: UpdateItinerary): Promise<UpdateItineraryData[] | undefined> => {
+  const {
+    name,
+    address,
+    emoji,
+    days_count,
+    num_of_people,
+    start_date,
+    end_date,
+  } = editTripData;
+
+  const supabase = await supabaseClient(token);
+  const { data, error } = await supabase
+    .from("itineraries")
+    .update({
+      name,
+      address,
+      emoji,
+      days_count,
+      num_of_people,
+      start_date,
+      end_date,
+    })
+    .eq("id", itineraryId)
+    .select();
+
+  if (error) {
+    console.error(
+      "There has been an error updating the itinerary: ",
+      error.message
+    );
+    return;
+  }
   return data;
 };
 
@@ -291,7 +338,7 @@ export const updateActivity = async ({
   token,
   activityId,
   editData,
-}: UpdateActivity): Promise<UpdateData[] | undefined> => {
+}: UpdateActivity): Promise<UpdateActivityData[] | undefined> => {
   const { name, time, address, description } = editData;
 
   const supabase = await supabaseClient(token);
