@@ -18,6 +18,11 @@ interface AddItinerary {
   token: string;
 }
 
+interface DeleteItinerary {
+  token: string | null;
+  itineraryId: string | undefined;
+}
+
 interface GetSpecific {
   itineraryId: string | undefined;
   token?: string | null;
@@ -111,6 +116,25 @@ export const getItineraries = async ({
     return;
   }
   return itineraries;
+};
+
+export const deleteItinerary = async ({
+  token,
+  itineraryId,
+}: DeleteItinerary) => {
+  const supabase = await supabaseClient(token);
+  const { error } = await supabase
+    .from("itineraries")
+    .delete()
+    .eq("id", itineraryId);
+
+  if (error) {
+    console.error(
+      "There has been an error deleting the itinerary in Supabase: ",
+      error.message
+    );
+    return error;
+  }
 };
 
 export const getSpecificItinerary = async ({
@@ -296,7 +320,10 @@ export const deleteActivity = async ({ token, activityId }: DeleteActivity) => {
     .eq("id", activityId);
 
   if (error) {
-    console.error("");
+    console.error(
+      "There has been an error deleting the activity in Supabase: ",
+      error.message
+    );
     return error;
   }
 };

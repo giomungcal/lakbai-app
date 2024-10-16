@@ -48,6 +48,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import {
   deleteActivity,
+  deleteItinerary,
   getSpecificActivity,
   updateDay,
 } from "@/utils/supabase/supabaseRequests";
@@ -62,19 +63,23 @@ import {
   PeriodType,
   UserRole,
 } from "@/validators/options";
+import { format } from "date-fns";
 import {
   EllipsisVertical,
   Info,
   Loader,
   Map,
   Minus,
+  Notebook,
   Plus,
+  Printer,
+  Share,
   SquarePen,
   Trash,
   TriangleAlert,
 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Dispatch, FC, SetStateAction, useEffect, useState } from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import { useMediaQuery } from "usehooks-ts";
@@ -89,9 +94,9 @@ const ItineraryPage: FC<FetchTripData> = ({
   itinerary,
   userRole,
 }) => {
+  const router = useRouter();
   const { getToken } = useTripsContext();
-  const isDesktop = useMediaQuery("(min-width: 768px)");
-
+  // const isDesktop = useMediaQuery("(min-width: 768px)");
   const [itineraryDetails, setItineraryDetails] =
     useState<ItineraryDetails | null>(itinerary?.[0] ?? null);
   const [tripActivities, setTripActivities] = useState<Activities[] | null>(
@@ -100,18 +105,27 @@ const ItineraryPage: FC<FetchTripData> = ({
   const numOfPeople = NUMBER_OF_PEOPLE.find(
     ({ value }) => value === itineraryDetails?.num_of_people
   );
-
-  //   Alert/Dialog/Modal Screen handling
-  const [openTripDetails, setOpenTripDetails] = useState<boolean>(false);
-  const [isAddActivityOpen, setIsAddActivityOpen] = useState<boolean>(false);
-
   const searchParams = useSearchParams();
   const [selectedDay, setSelectedDay] = useState<string | null>();
   const [filteredActivities, setFilteredActivities] = useState<
     Activities[] | null
   >([]);
 
+  //   Alert/Dialog/Modal Screen handling
+  const [isAddActivityOpen, setIsAddActivityOpen] = useState<boolean>(false);
+  const [deleteTripOpen, setDeleteTripOpen] = useState<boolean>(false);
+
   const { requestComplete } = useActivitiesContext();
+
+  const [startYear, startMonth, startDay] = itineraryDetails!.start_date
+    .split("-")
+    .map((i) => Number(i));
+  const [endYear, endMonth, endDay] = itineraryDetails!.end_date
+    .split("-")
+    .map((i) => Number(i));
+
+  const startDate = format(new Date(startYear, startMonth, startDay), "PP");
+  const endDate = format(new Date(endYear, endMonth, endDay), "PP");
 
   // Set selectedDay based on URL on mount
   useEffect(() => {
@@ -158,10 +172,6 @@ const ItineraryPage: FC<FetchTripData> = ({
     }
   }, [selectedDay, tripActivities, itineraryDetails?.id]);
 
-  useEffect(() => {
-    syncWithDatabase();
-  }, [requestComplete]);
-
   const syncWithDatabase = async () => {
     const token = await getToken({ template: "lakbai-supabase" });
     const result = await getSpecificActivity({
@@ -172,6 +182,10 @@ const ItineraryPage: FC<FetchTripData> = ({
       setTripActivities(result);
     }
   };
+
+  useEffect(() => {
+    syncWithDatabase();
+  }, [requestComplete]);
 
   const handleAddDay = async () => {
     setItineraryDetails((prev) => {
@@ -238,11 +252,31 @@ const ItineraryPage: FC<FetchTripData> = ({
     console.log(result);
   };
 
+  const handleDeleteTrip = async () => {
+    const token = await getToken({ template: "lakbai-supabase" });
+    const error = await deleteItinerary({
+      token,
+      itineraryId: itineraryDetails?.id,
+    });
+
+    if (error) {
+      toast({
+        title: "Deletion failed.",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Re-route to Trips page on success
+    router.push("/trips");
+    return;
+  };
+
   return (
     <MaxWidthWrapper className="flex w-full flex-col py-14 md:py-20">
       <div className="list-inside list-decimal text-sm text-center sm:text-left">
         {/* Title Section */}
-        <section className="flex flex-col md:flex-row space-y-4 justify-between w-full mb-14">
+        <section className="flex flex-row space-y-4 justify-between w-full mb-14">
           <div className="flex flex-col space-y-4">
             <div className="flex flex-col md:flex-row text-5xl md:text-6xl font-bold text-left space-y-4 md:space-y-0 mr-4">
               <h1 className="text-title dark:text-title-foreground text">
@@ -251,40 +285,88 @@ const ItineraryPage: FC<FetchTripData> = ({
               </h1>
             </div>
             <div className="flex flex-row flex-wrap gap-2 text-base">
-              <Badge variant="default">
+              <Badge variant="outline">
                 📍 {itineraryDetails?.address ?? "Brat House 👽"}
               </Badge>
-              <Badge variant="secondary">
+              <Badge variant="outline">
                 {numOfPeople?.display ?? "👹 69 Bachelors"}
               </Badge>
-              <Badge variant="secondary">
-                📅 {itineraryDetails?.start_date ?? "May 79, 2092"} to{" "}
-                {itineraryDetails?.end_date ?? "1932"}
+              <Badge variant="outline">
+                📅 {startDate} to {endDate}
               </Badge>
             </div>
-            <div className="md:flex md:space-x-2 space-y-2 md:space-y-0  w-full">
-              <Button className="md:w-auto w-full">Explore Nearby</Button>
-              <Button className="md:w-auto w-full">Notes</Button>
+            <div className="flex space-x-2 space-y-0">
+              <Button variant="secondary" className="">
+                <Notebook className="mr-2 h-4 w-4" />
+                <span>Notes</span>
+              </Button>
+              <Button variant="default" className="">
+                <Share className="mr-2 h-4 w-4" />
+                <span>Share Itinerary</span>
+              </Button>
             </div>
           </div>
           <div className="flex flex-col justify-start space-y-2">
-            <Button
-              variant="secondary"
-              onClick={() => window.print()}
-              className="print:hidden"
-            >
-              Download Itinerary
-            </Button>
-
-            <Button
-              variant="secondary"
-              onClick={() => window.print()}
-              className="print:hidden"
-            >
-              Delete Trip
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" className="">
+                  <EllipsisVertical
+                    width={17}
+                    height={17}
+                    className="shrink-0"
+                  />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {userRole === "owner" && (
+                  <DropdownMenuItem className="cursor-pointer">
+                    <SquarePen className="mr-2 h-4 w-4" />
+                    <span>Edit Trip Details</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem className="cursor-pointer">
+                  <Printer className="mr-2 h-4 w-4" />
+                  <span>Print Itinerary</span>
+                </DropdownMenuItem>
+                {userRole === "owner" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setDeleteTripOpen(true)}
+                      className="cursor-pointer"
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      <span>Delete Trip</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </section>
+
+        {/* [OWNER] Deleting Trip */}
+
+        {(userRole === "edit" || userRole === "owner") &&
+          itineraryDetails?.days_count !== 0 && (
+            <AlertDialog open={deleteTripOpen} onOpenChange={setDeleteTripOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will delete the trip: {itineraryDetails?.name} and all
+                    of its activities. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteTrip}>
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
 
         {/* Horizontal Separator */}
         <div className="h-px w-full bg-slate-200"></div>
@@ -325,50 +407,48 @@ const ItineraryPage: FC<FetchTripData> = ({
                     )
                   )}
                   <div className="flex space-x-1 mt-1">
-                    {itineraryDetails!.days_count < MAX_DAYS && (
-                      <Button
-                        className={`text-sm font-normal w-full hidden justify-center space-x-1  ${
-                          (userRole === "edit" || userRole === "owner") &&
-                          "flex"
-                        }`}
-                        variant="default"
-                        onClick={handleAddDay}
-                      >
-                        <Plus width={13} height={13} />
-                      </Button>
-                    )}
+                    {/* Adding Day */}
+                    {(userRole === "edit" || userRole === "owner") &&
+                      itineraryDetails!.days_count < MAX_DAYS && (
+                        <Button
+                          className={`text-sm font-normal w-full justify-center space-x-1 flex`}
+                          variant="default"
+                          onClick={handleAddDay}
+                        >
+                          <Plus width={13} height={13} />
+                        </Button>
+                      )}
 
-                    {itineraryDetails?.days_count !== 0 && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            className={`text-sm font-normal w-full hidden justify-center space-x-1 ${
-                              (userRole === "edit" || userRole === "owner") &&
-                              "flex"
-                            }`}
-                            variant="secondary"
-                          >
-                            <Minus width={13} height={13} />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This will delete the latest day which is Day{" "}
-                              {itineraryDetails?.days_count}. This action cannot
-                              be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeleteDay}>
-                              Continue
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    )}
+                    {/* Removing Days */}
+                    {(userRole === "edit" || userRole === "owner") &&
+                      itineraryDetails?.days_count !== 0 && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              className={`text-sm font-normal w-full justify-center space-x-1 flex`}
+                              variant="secondary"
+                            >
+                              <Minus width={13} height={13} />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will delete the latest day which is Day{" "}
+                                {itineraryDetails?.days_count}. This action
+                                cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleDeleteDay}>
+                                Continue
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
                   </div>
                 </SelectContent>
               </Select>
@@ -422,24 +502,6 @@ const ItineraryPage: FC<FetchTripData> = ({
                         itineraryId={itineraryDetails?.id}
                         selectedDay={selectedDay}
                       />
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="">
-                            <EllipsisVertical
-                              width={17}
-                              height={17}
-                              className="shrink-0"
-                            />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem className="cursor-pointer">
-                            <Trash className="mr-2 h-4 w-4" />
-                            <span>Delete all activities</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
                   )}
                 </div>
@@ -585,7 +647,7 @@ const ActivityCard = ({
     const token = await getToken({ template: "lakbai-supabase" });
     const error = await deleteActivity({ token, activityId });
 
-    if (error && error.message) {
+    if (error) {
       toast({
         title: "Deletion failed.",
         description: "Please try again later.",
@@ -931,6 +993,8 @@ const AddActivitySheet = ({
     setIsFormComplete,
   } = useActivitiesContext();
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     if (!isAddActivityOpen) {
       setActivityData(defaultActivityData);
@@ -939,14 +1003,21 @@ const AddActivitySheet = ({
   }, [isAddActivityOpen, setActivityData, setIsFormComplete]);
 
   async function handleSubmitActivity() {
+    setIsSubmitting(true);
     const result = await submitTrip({ itineraryId, day });
-    console.log(result);
     if (!result) {
+      setIsSubmitting(false);
+      toast({
+        title: "Insertion failed.",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
       return;
     }
 
     if (result.length !== 0) {
       setIsAddActivityOpen(false);
+      setIsSubmitting(false);
     }
   }
 
@@ -965,6 +1036,7 @@ const AddActivitySheet = ({
               Title
             </Label>
             <Input
+              disabled={isSubmitting}
               id="title"
               className="col-span-3"
               placeholder="Trekking at.."
@@ -982,6 +1054,7 @@ const AddActivitySheet = ({
               <GooglePlacesAutocomplete
                 apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
                 selectProps={{
+                  isDisabled: isSubmitting,
                   onChange: (value) =>
                     setActivityData((prev) => ({
                       ...prev,
@@ -997,6 +1070,7 @@ const AddActivitySheet = ({
             </Label>
 
             <Select
+              disabled={isSubmitting}
               defaultValue={activityData.hour}
               onValueChange={(value) =>
                 setActivityData((prev) => ({
@@ -1018,6 +1092,7 @@ const AddActivitySheet = ({
             </Select>
 
             <Select
+              disabled={isSubmitting}
               defaultValue={activityData.minute}
               onValueChange={(value) =>
                 setActivityData((prev) => ({
@@ -1038,6 +1113,7 @@ const AddActivitySheet = ({
               </SelectContent>
             </Select>
             <Select
+              disabled={isSubmitting}
               defaultValue={activityData.period}
               onValueChange={(value) =>
                 setActivityData((prev) => ({
@@ -1063,6 +1139,7 @@ const AddActivitySheet = ({
               Description
             </Label>
             <Textarea
+              disabled={isSubmitting}
               id="description"
               className="col-span-3"
               placeholder="Ride a tricycle to.."
@@ -1097,7 +1174,16 @@ const AddActivitySheet = ({
           </div>
         </div>
         <SheetFooter>
-          <Button onClick={handleSubmitActivity}>Save changes</Button>
+          <Button disabled={isSubmitting} onClick={handleSubmitActivity}>
+            {isSubmitting ? (
+              <div className="flex space-x-2 justify-center items-center">
+                <Loader width={12} height={12} className="animate-spin" />
+                <span>Submitting..</span>
+              </div>
+            ) : (
+              "Save changes"
+            )}
+          </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

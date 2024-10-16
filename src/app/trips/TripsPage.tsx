@@ -248,6 +248,22 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                   (i) => i.value === number
                 );
 
+                const [startYear, startMonth, startDay] = dateStart
+                  .split("-")
+                  .map((i) => Number(i));
+                const [endYear, endMonth, endDay] = dateEnd
+                  .split("-")
+                  .map((i) => Number(i));
+
+                const dateStartFormatted = format(
+                  new Date(startYear, startMonth, startDay),
+                  "PP"
+                );
+                const dateEndFormatted = format(
+                  new Date(endYear, endMonth, endDay),
+                  "PP"
+                );
+
                 return (
                   <div
                     key={index}
@@ -282,7 +298,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                     </div>
                     <div className="flex flex-col space-y-2">
                       <p className="text-xs truncate font-semibold text-muted-foreground">
-                        📆 {dateStart} to {dateEnd}
+                        📆 {dateStartFormatted} to {dateEndFormatted}
                       </p>
                       <Link
                         href={`/trips/itinerary?id=${id}`}
