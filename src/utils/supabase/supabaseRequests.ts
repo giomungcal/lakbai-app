@@ -67,6 +67,12 @@ interface DeleteActivity {
   activityId: number;
 }
 
+interface UpdatePublic {
+  token: string | null;
+  itineraryId: string;
+  isPublic: boolean;
+}
+
 type ItineraryType = Itinerary[];
 type ActivitiesType = Activities[];
 
@@ -373,4 +379,27 @@ export const deleteActivity = async ({ token, activityId }: DeleteActivity) => {
     );
     return error;
   }
+};
+
+export const updatePublic = async ({
+  token,
+  itineraryId,
+  isPublic,
+}: UpdatePublic) => {
+  const supabase = await supabaseClient(token);
+  const { data, error } = await supabase
+    .from("itineraries")
+    .update({ is_public: isPublic })
+    .eq("id", itineraryId)
+    .select();
+
+  if (error) {
+    console.error(
+      "There has been an error updating the data in Supabase: ",
+      error.message
+    );
+    return;
+  }
+
+  return data;
 };

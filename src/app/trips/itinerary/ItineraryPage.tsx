@@ -5,13 +5,6 @@ import {
   useActivitiesContext,
   useTripsContext,
 } from "@/app/_context/AppContext";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 import {
   AlertDialog,
@@ -26,14 +19,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,6 +63,7 @@ import {
   getSpecificActivity,
   getSpecificItinerary,
   updateDay,
+  updatePublic,
 } from "@/utils/supabase/supabaseRequests";
 import {
   EMOJIS,
@@ -115,6 +108,8 @@ import {
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import { useMediaQuery } from "usehooks-ts";
 import { Database } from "../../../../database.types";
+import CollaborationDialog from "./components/CollaborationDialog";
+import ShareItineraryDialog from "./components/ShareItineraryDialog";
 import { FetchTripData } from "./page";
 
 type ItineraryDetails = Database["public"]["Tables"]["itineraries"]["Row"];
@@ -146,6 +141,8 @@ const ItineraryPage: FC<FetchTripData> = ({
   const [isAddActivityOpen, setIsAddActivityOpen] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState<boolean>(false);
+  const [isCollabDialogOpen, setIsCollabDialogOpen] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const {
@@ -186,6 +183,9 @@ const ItineraryPage: FC<FetchTripData> = ({
     } else if (itineraryDetails && itineraryDetails?.days_count >= 1) {
       setSelectedDay("1");
     }
+
+    syncActivitiesWithDb();
+    syncTripsWithDb();
   }, []);
 
   // Set URL & filter activities on state change
@@ -218,6 +218,10 @@ const ItineraryPage: FC<FetchTripData> = ({
     }
   }, [selectedDay, tripActivities, itineraryDetails?.id]);
 
+  useEffect(() => {
+    syncActivitiesWithDb();
+  }, [requestComplete]);
+
   const syncActivitiesWithDb = async () => {
     const token = await getToken({ template: "lakbai-supabase" });
     const result = await getSpecificActivity({
@@ -240,11 +244,16 @@ const ItineraryPage: FC<FetchTripData> = ({
     }
   };
 
-  useEffect(() => {
-    syncActivitiesWithDb();
-  }, [requestComplete]);
-
   const handleAddDay = async () => {
+    if (itineraryDetails!.days_count >= MAX_DAYS) {
+      toast({
+        title: "Day count exceeded",
+        description: `Maximum number of days is ${MAX_DAYS}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setItineraryDetails((prev) => {
       if (prev) {
         const dayNum = prev.days_count + 1;
@@ -253,15 +262,6 @@ const ItineraryPage: FC<FetchTripData> = ({
           setSelectedDay("1");
         }
 
-        if (prev.days_count >= 14) {
-          toast({
-            title: "Day count exceeded",
-            description: `Maximum number of days is ${MAX_DAYS}`,
-            variant: "destructive",
-          });
-
-          return prev;
-        }
         return { ...prev, days_count: dayNum };
       }
       return null;
@@ -277,19 +277,20 @@ const ItineraryPage: FC<FetchTripData> = ({
   };
 
   const handleDeleteDay = async () => {
+    if (itineraryDetails!.days_count === 0) {
+      toast({
+        title: "Day count at 0",
+        description: `You cannot remove any more days.`,
+        variant: "default",
+      });
+
+      return;
+    }
+
     setItineraryDetails((prev) => {
       if (prev) {
         const dayNum = prev.days_count - 1;
 
-        if (prev.days_count === 0) {
-          toast({
-            title: "Day count at 0",
-            description: `You cannot remove any more days.`,
-            variant: "default",
-          });
-
-          return prev;
-        }
         return { ...prev, days_count: dayNum };
       }
       return null;
@@ -300,13 +301,12 @@ const ItineraryPage: FC<FetchTripData> = ({
     }
 
     const token = await getToken({ template: "lakbai-supabase" });
-    const result = await updateDay({
+    await updateDay({
       token,
       action: "delete",
       day: itineraryDetails!.days_count - 1,
       itineraryId: itineraryDetails!.id,
     });
-    console.log(result);
   };
 
   const handleEditOpen = () => {
@@ -406,6 +406,31 @@ const ItineraryPage: FC<FetchTripData> = ({
     syncTripsWithDb();
   };
 
+  const handlePublicChange = async () => {
+    setItineraryDetails((prev) => {
+      if (prev) {
+        return { ...prev, is_public: !prev.is_public };
+      }
+      return prev;
+    });
+
+    const token = await getToken({ template: "lakbai-supabase" });
+    const result = await updatePublic({
+      token,
+      itineraryId: itineraryDetails!.id,
+      isPublic: !itineraryDetails?.is_public,
+    });
+
+    if (!result) {
+      toast({
+        title: "Update failed",
+        description: "There has been an error updating the value.",
+        variant: "destructive",
+      });
+      syncTripsWithDb();
+    }
+  };
+
   return (
     <MaxWidthWrapper className="flex w-full flex-col py-14 md:py-20">
       <div className="list-inside list-decimal text-sm text-center sm:text-left">
@@ -435,134 +460,49 @@ const ItineraryPage: FC<FetchTripData> = ({
                 📅 {dateStartFormatted} to {dateEndFormatted}
               </Badge>
             </div>
-            <div className="flex space-x-2 space-y-0">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="secondary" className="">
-                    <Users className="mr-2 h-4 w-4" />
-                    <span>Collaboration</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="p-8 space-y-2">
-                  <DialogHeader>
-                    <DialogTitle>Collaboration</DialogTitle>
-                    <DialogDescription>
-                      Manage the people who have access to this itinerary.
-                    </DialogDescription>
-                  </DialogHeader>
 
-                  <div className="space-y-2">
-                    <div className="flex flex-col sm:flex-row space-y-2 justify-between">
-                      <div className="flex space-x-3 items-center">
-                        <div className="size-9 rounded-full bg-gray-400 " />
-                        <div>
-                          <p className="font-semibold">Gio Mungcal</p>
-                          <p className="text-xs text-card-foreground/80 min-w-20">
-                            fashionkilla79@gmail.com
-                          </p>
-                        </div>
-                      </div>
-                      <Select>
-                        <SelectTrigger className="w-auto sm:w-[130px]">
-                          <SelectValue placeholder="Access level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="edit">Can Edit</SelectItem>
-                            <SelectItem value="view">Can View</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex flex-col sm:flex-row space-y-2 justify-between">
-                      <div className="flex space-x-3 items-center">
-                        <div className="size-9 rounded-full bg-gray-400 " />
-                        <div>
-                          <p className="font-semibold">Grim Falconer</p>
-                          <p className="text-xs text-card-foreground/80 min-w-20">
-                            skinnylegend22@gmail.com
-                          </p>
-                        </div>
-                      </div>
-                      <Select>
-                        <SelectTrigger className="w-auto sm:w-[130px]">
-                          <SelectValue placeholder="Access level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="edit">Can Edit</SelectItem>
-                            <SelectItem value="view">Can View</SelectItem>
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex justify-between">
-                    <div className="space-y-1">
-                      <Label className="font-semibold text-base">
-                        Add Collaborator
-                      </Label>
-                      <p className="text-card-foreground/80 text-xs">
-                        Enter the email of the person you'd like to add.
-                      </p>
-                    </div>
-                    <Button>Add User</Button>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <Input className="flex-grow" />
-                    <Select>
-                      <SelectTrigger className="w-auto sm:w-[230px]">
-                        <SelectValue placeholder="Access level" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value="edit">Can Edit</SelectItem>
-                          <SelectItem value="view">Can View</SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="default" className="">
-                    <Share className="mr-2 h-4 w-4" />
-                    <span>Share Itinerary</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="p-8 space-y-2">
-                  <DialogHeader>
-                    <DialogTitle>Share this itinerary</DialogTitle>
-                    <DialogDescription>
-                      If set to public, anyone with the link can view this
-                      document
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="flex gap-2">
-                    <Input className="flex-grow" />
-                    <Button variant="default" className="max-w-36">
-                      Copy Link
+            {(userRole === "edit" || userRole === "owner") && (
+              <div className="flex space-x-2 space-y-0">
+                {userRole === "owner" && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setIsCollabDialogOpen(true)}
+                    >
+                      <Users className="mr-2 h-4 w-4" />
+                      <span>Collaboration</span>
                     </Button>
-                  </div>
-                  <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                    <div className="space-y-0.5 p-1">
-                      <Label>Set Itinerary to Public Access</Label>
-                      <p className="text-card-foreground/80 text-xs">
-                        If set to true, allows this trip to be publicly
-                        viewable.
-                      </p>
-                    </div>
-                    <Switch />
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+
+                    {isCollabDialogOpen && (
+                      <CollaborationDialog
+                        isOpen={isCollabDialogOpen}
+                        onClose={() => setIsCollabDialogOpen(false)}
+                      />
+                    )}
+                  </>
+                )}
+
+                <Button
+                  variant="default"
+                  onClick={() => setIsShareDialogOpen(true)}
+                >
+                  <Share className="mr-2 h-4 w-4" />
+                  <span>Share Itinerary</span>
+                </Button>
+
+                {isShareDialogOpen && (
+                  <ShareItineraryDialog
+                    isOpen={isShareDialogOpen}
+                    onClose={() => {
+                      setIsShareDialogOpen(false);
+                    }}
+                    isPublic={itineraryDetails?.is_public}
+                    onPublicChange={handlePublicChange}
+                    isOwner={userRole === "owner"}
+                  />
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col justify-start space-y-2">

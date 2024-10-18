@@ -89,7 +89,7 @@ const Page = async ({ searchParams }: PageProps) => {
   if (!itinerary || itinerary.length === 0) {
     return (
       <section className="h-full w-full flex flex-col justify-center items-center ">
-        <h1>I think you might be missing, let me lead you home.</h1>
+        <h1>NOPE LEAVE</h1>
         <p>
           The itinerary you are trying to view might not be set to public or
           does not exist. Reach out to the owner.
