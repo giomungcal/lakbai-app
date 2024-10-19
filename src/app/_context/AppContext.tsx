@@ -98,10 +98,6 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
 
-  useEffect(() => {
-    console.log(itineraryDetails);
-  }, [itineraryDetails]);
-
   function validationForm() {
     const { name, address, emoji, start_date, end_date, num_of_people } =
       itineraryDetails;
@@ -270,10 +266,6 @@ export const ActivitiesContextProvider = ({
   const [editData, setEditData] = useState<EditData>(defaultActivityEdit);
   const [isFormComplete, setIsFormComplete] = useState<boolean | null>(null);
   const [requestComplete, setRequestComplete] = useState(false);
-
-  // useEffect(() => {
-  //   console.log(editData);
-  // }, [editData]);
 
   const validationForm = () => {
     const { name, address, hour, minute, period } = activityData;

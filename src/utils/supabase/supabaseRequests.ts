@@ -1,7 +1,6 @@
 import { ActivityData } from "@/app/_context/AppContext";
 import { toast } from "@/hooks/use-toast";
-import { EMOJIS } from "@/validators/options";
-import { SupabaseClient } from "@supabase/supabase-js";
+import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { Database } from "../../../database.types";
 import { supabaseClient } from "./supabaseClient";
@@ -73,6 +72,21 @@ interface UpdatePublic {
   isPublic: boolean;
 }
 
+interface AddUserRole {
+  token: string | null;
+  emailAddress: string;
+  role: string;
+  itineraryId: string;
+}
+
+interface ClerkUsers {
+  email_address: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  image_url: string;
+}
+
 type ItineraryType = Itinerary[];
 type ActivitiesType = Activities[];
 
@@ -105,7 +119,6 @@ export const getUserRoles = async ({
       console.error("Error fetching user roles:", error.message);
       return;
     }
-    console.log(data);
 
     return data as UserRoles[];
   }
@@ -415,4 +428,76 @@ export const updatePublic = async ({
   }
 
   return data;
+};
+
+export const addUserRole = async ({
+  token,
+  emailAddress,
+  role,
+  itineraryId,
+}: AddUserRole) => {
+  try {
+    const { data } = await axios.get<ClerkUsers[]>("/api/users");
+
+    // Check if email address to be added is in Clerk Userlist
+    const userToBeAdded = data.find(
+      (user) => user.email_address === emailAddress
+    );
+
+    if (!userToBeAdded) {
+      toast({
+        title: "User does not exist",
+        description:
+          "Please verify the email address, or ensure that the user has an existing account.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Identify if the email address already has access
+    const userRole = await getUserRoles({
+      token,
+      userId: userToBeAdded.user_id,
+    });
+
+    const roleForUserExists = userRole?.find((user) => {
+      if (user.itinerary_id === itineraryId) {
+        return true;
+      }
+      return false;
+    });
+
+    if (roleForUserExists) {
+      toast({
+        title: "Access already exists for user",
+        description:
+          "You can manage the user's access level in the section above.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const supabase = await supabaseClient(token);
+    const { data: insertedUser } = await supabase
+      .from("user_roles")
+      .insert([
+        {
+          itinerary_id: itineraryId,
+          user_id: userToBeAdded.user_id,
+          role,
+          email_address: userToBeAdded.email_address,
+          first_name: userToBeAdded.first_name,
+          last_name: userToBeAdded.last_name,
+          image_url: userToBeAdded.image_url,
+        },
+      ])
+      .select();
+
+    return insertedUser as UserRoles[];
+  } catch (error) {
+    console.error(
+      "There has been an issue fetching the data from Clerk: ",
+      error
+    );
+  }
 };

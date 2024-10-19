@@ -4,7 +4,9 @@ import {
   getUserRoles,
 } from "@/utils/supabase/supabaseRequests";
 import { UserRole } from "@/validators/options";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { users } from "@clerk/clerk-sdk-node";
+import { auth, currentUser, User } from "@clerk/nextjs/server";
+import axios from "axios";
 import { Database } from "../../../../database.types";
 import ItineraryPage from "./ItineraryPage";
 
