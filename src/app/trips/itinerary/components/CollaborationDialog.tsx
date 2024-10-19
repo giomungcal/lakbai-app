@@ -1,3 +1,6 @@
+"use client";
+
+import { useTripsContext } from "@/app/_context/AppContext";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,8 +21,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { getUserRoles } from "@/utils/supabase/supabaseRequests";
+import { useEffect, useState } from "react";
+import { Database } from "../../../../../database.types";
+import { getFullNameByUserId } from "../actions";
 
-const CollaborationDialog = ({ isOpen, onClose }) => {
+type Users = Database["public"]["Tables"]["user_roles"]["Row"];
+
+const CollaborationDialog = ({ isOpen, onClose, itineraryId }) => {
+  const [users, setUsers] = useState<Users[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const { getToken } = useTripsContext();
+
+  useEffect(() => {
+    console.log("UseEffect Ran");
+
+    setIsLoading(true);
+    const getUsers = async () => {
+      const token = await getToken({ template: "lakbai-supabase" });
+      const result = await getUserRoles({ token, itineraryId });
+
+      if (result) {
+        setUsers(result);
+      }
+      setIsLoading(false);
+    };
+    getUsers();
+  }, []);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogTrigger asChild></DialogTrigger>
@@ -32,50 +62,30 @@ const CollaborationDialog = ({ isOpen, onClose }) => {
         </DialogHeader>
 
         <div className="space-y-2">
-          <div className="flex flex-col sm:flex-row space-y-2 justify-between">
-            <div className="flex space-x-3 items-center">
-              <div className="size-9 rounded-full bg-gray-400 " />
-              <div>
-                <p className="font-semibold">Gio Mungcal</p>
-                <p className="text-xs text-card-foreground/80 min-w-20">
-                  fashionkilla79@gmail.com
-                </p>
+          {users.map((user) => (
+            <div className="flex flex-col sm:flex-row space-y-2 justify-between">
+              <div className="flex space-x-3 items-center">
+                <div className="size-9 rounded-full bg-gray-400 " />
+                <div>
+                  <p className="font-semibold">gcmungcal@gmail.com</p>
+                  <p className="text-xs text-card-foreground/80 min-w-20">
+                    {user.user_id}
+                  </p>
+                </div>
               </div>
+              <Select value={user.role}>
+                <SelectTrigger className="w-auto sm:w-[130px]">
+                  <SelectValue placeholder="Access level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="edit">Can Edit</SelectItem>
+                    <SelectItem value="view">Can View</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
-            <Select>
-              <SelectTrigger className="w-auto sm:w-[130px]">
-                <SelectValue placeholder="Access level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="edit">Can Edit</SelectItem>
-                  <SelectItem value="view">Can View</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col sm:flex-row space-y-2 justify-between">
-            <div className="flex space-x-3 items-center">
-              <div className="size-9 rounded-full bg-gray-400 " />
-              <div>
-                <p className="font-semibold">Grim Falconer</p>
-                <p className="text-xs text-card-foreground/80 min-w-20">
-                  skinnylegend22@gmail.com
-                </p>
-              </div>
-            </div>
-            <Select>
-              <SelectTrigger className="w-auto sm:w-[130px]">
-                <SelectValue placeholder="Access level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value="edit">Can Edit</SelectItem>
-                  <SelectItem value="view">Can View</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
+          ))}
         </div>
 
         <Separator />

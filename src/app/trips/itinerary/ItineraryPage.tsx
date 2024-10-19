@@ -477,6 +477,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                       <CollaborationDialog
                         isOpen={isCollabDialogOpen}
                         onClose={() => setIsCollabDialogOpen(false)}
+                        itineraryId={itineraryDetails!.id}
                       />
                     )}
                   </>

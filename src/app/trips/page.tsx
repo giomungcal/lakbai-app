@@ -8,10 +8,6 @@ import TripsPage from "./TripsPage";
 
 type Itineraries = Database["public"]["Tables"]["itineraries"]["Row"];
 
-interface FetchItineraries {
-  trips: Itineraries[] | undefined;
-}
-
 const Page = async () => {
   const { userId, getToken } = auth();
 

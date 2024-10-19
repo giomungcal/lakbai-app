@@ -44,6 +44,7 @@ interface GetTokenOptions {
 interface TripsContext {
   userId: string | null | undefined;
   getToken: (options?: GetTokenOptions) => Promise<string | null>;
+  emailAddress: string | undefined;
 
   startDate: Date;
   setStartDate: Dispatch<SetStateAction<Date>>;
@@ -84,8 +85,10 @@ const defaultItineraryEdit: UpdateItinerary = {
 const TripsContext = createContext<TripsContext | null>(null);
 
 export const TripsContextProvider = ({ children }: ContextProviderProps) => {
-  const { userId, getToken } = useAuth();
   const { user } = useUser();
+  const emailAddress = user?.emailAddresses[0].emailAddress;
+
+  const { userId, getToken } = useAuth();
 
   const [itineraryDetails, setItineraryDetails] =
     useState<ItineraryDetails>(defaultItinerary);
@@ -170,6 +173,7 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
       value={{
         userId,
         getToken,
+        emailAddress,
 
         startDate,
         setStartDate,

@@ -231,7 +231,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
           <div className="w-full h-12 rounded-lg bg-secondary/60" />
         </div>
       ) : trips.length === 0 ? (
-        <div className="w-full h-full border-border border-2 bg-card rounded-3xl border-dashed text-center space-y-1 flex flex-col justify-center items-center">
+        <div className="w-full h-80 border-border border-2 bg-card rounded-3xl border-dashed text-center space-y-1 flex flex-col justify-center items-center">
           <span className="text-4xl">👻</span>
           <h2 className="text-2xl font-semibold text-card-foreground">
             No trips yet.

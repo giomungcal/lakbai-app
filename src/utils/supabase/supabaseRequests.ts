@@ -37,9 +37,9 @@ interface GetSpecific {
 }
 
 interface GetUserRoles {
-  userId: string;
+  userId?: string;
+  itineraryId?: string;
   token: string | null;
-  supabase?: SupabaseClient;
 }
 
 interface UpdateDay {
@@ -78,24 +78,37 @@ type ActivitiesType = Activities[];
 
 export const getUserRoles = async ({
   userId,
+  itineraryId,
   token,
-  supabase,
-}: GetUserRoles): Promise<UserRoles[] | undefined> => {
-  if (!supabase) {
-    supabase = await supabaseClient(token);
+}: GetUserRoles) => {
+  const supabase = await supabaseClient(token);
+
+  if (userId) {
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("*")
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Error fetching user roles:", error.message);
+      return;
+    }
+
+    return data as UserRoles[];
+  } else if (itineraryId) {
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("*")
+      .eq("itinerary_id", itineraryId);
+
+    if (error) {
+      console.error("Error fetching user roles:", error.message);
+      return;
+    }
+    console.log(data);
+
+    return data as UserRoles[];
   }
-
-  const { data: userRoles, error: rolesError } = await supabase
-    .from("user_roles")
-    .select("*")
-    .eq("user_id", userId);
-
-  if (rolesError) {
-    console.error("Error fetching user roles:", rolesError);
-    return;
-  }
-
-  return userRoles;
 };
 
 export const getItineraries = async ({
@@ -108,7 +121,7 @@ export const getItineraries = async ({
   const supabase = await supabaseClient(token);
 
   // Fetch user roles first
-  const userRoles = await getUserRoles({ userId, token, supabase });
+  const userRoles = await getUserRoles({ userId, token });
 
   let itineraryIds: string[] = [];
 
