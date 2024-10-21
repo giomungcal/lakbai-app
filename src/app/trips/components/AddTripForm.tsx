@@ -15,6 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   EMOJIS,
@@ -38,11 +45,11 @@ export const AddTripForm = ({ className }: { className: string }) => {
   } = useTripsContext();
 
   return (
-    <form className={cn("grid items-start gap-4", className)}>
+    <div className={cn("grid items-start gap-4", className)}>
       <div className="grid w-full items-center gap-4">
         <div className="flex space-x-2">
           <div className="flex flex-col space-y-1.5">
-            <Label htmlFor="name">Emoji</Label>
+            <Label htmlFor="emoji">Emoji</Label>
             <Select
               defaultValue={itineraryDetails.emoji}
               onValueChange={(value: EmojiValue) =>
@@ -51,7 +58,7 @@ export const AddTripForm = ({ className }: { className: string }) => {
                 })
               }
             >
-              <SelectTrigger id="framework">
+              <SelectTrigger id="emoji">
                 <SelectValue placeholder="00" />
               </SelectTrigger>
               <SelectContent position="popper">
@@ -79,7 +86,7 @@ export const AddTripForm = ({ className }: { className: string }) => {
         </div>
 
         <div className="flex flex-col space-y-1.5">
-          <Label htmlFor="name">Destination</Label>
+          <Label htmlFor="destination">Destination</Label>
           <GooglePlacesAutocomplete
             apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
             selectProps={{
@@ -91,9 +98,9 @@ export const AddTripForm = ({ className }: { className: string }) => {
           />
         </div>
         <div className="flex flex-col space-y-1.5">
-          <Label htmlFor="name">Date Start</Label>
+          <Label htmlFor="dateStart">Date Start</Label>
           <Popover>
-            <PopoverTrigger asChild>
+            <PopoverTrigger id="dateStart" asChild>
               <Button
                 variant={"outline"}
                 className={cn(
@@ -129,9 +136,9 @@ export const AddTripForm = ({ className }: { className: string }) => {
         </div>
 
         <div className="flex flex-col space-y-1.5">
-          <Label htmlFor="name">Date End</Label>
+          <Label htmlFor="dateEnd">Date End</Label>
           <Popover>
-            <PopoverTrigger asChild>
+            <PopoverTrigger id="dateEnd" asChild>
               <Button
                 variant={"outline"}
                 className={cn(
@@ -163,7 +170,7 @@ export const AddTripForm = ({ className }: { className: string }) => {
         </div>
 
         <div className="flex flex-col space-y-1.5">
-          <Label htmlFor="framework">Number of Travelers</Label>
+          <Label htmlFor="number">Number of Travelers</Label>
 
           <Select
             defaultValue={itineraryDetails.num_of_people}
@@ -171,7 +178,7 @@ export const AddTripForm = ({ className }: { className: string }) => {
               setItineraryDetails((prev) => ({ ...prev, num_of_people: value }))
             }
           >
-            <SelectTrigger id="framework">
+            <SelectTrigger id="number">
               <SelectValue placeholder="Are you travelling alone?" />
             </SelectTrigger>
             <SelectContent position="popper">
@@ -185,7 +192,35 @@ export const AddTripForm = ({ className }: { className: string }) => {
             </SelectContent>
           </Select>
         </div>
+
+        {/* LakbAI Switch */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex flex-row items-center justify-between bg-accent/50 border rounded-lg p-3">
+                <div className="space-y-0.5 p-1">
+                  <Label>Generate Trip with LakbAI 🐸</Label>
+                  <p className="text-card-foreground/80 text-xs">
+                    Let LakbAI create the whole trip for you.
+                  </p>
+                </div>
+                <Switch
+                  checked={itineraryDetails.is_created_by_lakbai}
+                  onCheckedChange={() =>
+                    setItineraryDetails((prev) => ({
+                      ...prev,
+                      is_created_by_lakbai: !prev.is_created_by_lakbai,
+                    }))
+                  }
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Note: LakbAI can only generate up to 5 days of itinerary</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
-    </form>
+    </div>
   );
 };

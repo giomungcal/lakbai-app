@@ -44,7 +44,6 @@ interface GetTokenOptions {
 interface TripsContext {
   userId: string | null | undefined;
   getToken: (options?: GetTokenOptions) => Promise<string | null>;
-  emailAddress: string | undefined;
 
   startDate: Date;
   setStartDate: Dispatch<SetStateAction<Date>>;
@@ -85,11 +84,7 @@ const defaultItineraryEdit: UpdateItinerary = {
 const TripsContext = createContext<TripsContext | null>(null);
 
 export const TripsContextProvider = ({ children }: ContextProviderProps) => {
-  const { user } = useUser();
-  const emailAddress = user?.emailAddresses[0].emailAddress;
-
   const { userId, getToken } = useAuth();
-
   const [itineraryDetails, setItineraryDetails] =
     useState<ItineraryDetails>(defaultItinerary);
   const [editTripData, setEditTripData] =
@@ -97,6 +92,10 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
 
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
+
+  useEffect(() => {
+    console.log(itineraryDetails);
+  }, [itineraryDetails]);
 
   function validationForm() {
     const { name, address, emoji, start_date, end_date, num_of_people } =
@@ -124,6 +123,10 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
 
   async function addTrip() {
     if (validationForm() && userId) {
+      if (itineraryDetails.is_created_by_lakbai === true) {
+        // Put Gemini AI codebase here!!
+      }
+
       const token = await getToken({ template: "lakbai-supabase" });
 
       if (token) {
@@ -170,7 +173,6 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
       value={{
         userId,
         getToken,
-        emailAddress,
 
         startDate,
         setStartDate,

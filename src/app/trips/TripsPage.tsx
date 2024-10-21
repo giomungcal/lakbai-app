@@ -72,7 +72,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   const { getToken } = useAuth();
 
   const [trips, setTrips] = useState<TripsProps[]>([]);
-  const [openTripDetails, setOpenTripDetails] = useState<boolean>(false);
+  const [openAddTrip, setOpenAddTrip] = useState<boolean>(false);
   const [isTripsLoading, setIsTripsLoading] = useState<boolean>(true);
 
   const { addTrip } = useTripsContext();
@@ -140,7 +140,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
 
   async function handleTripSave() {
     const result = await addTrip();
-    if (result && result.length !== 0) setOpenTripDetails(false);
+    if (result && result.length !== 0) setOpenAddTrip(false);
 
     // Update list when a new trip is added
     syncTripsWithDatabase();
@@ -171,7 +171,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
         </div>
         <div className="space-x-2">
           {isDesktop ? (
-            <Dialog open={openTripDetails} onOpenChange={setOpenTripDetails}>
+            <Dialog open={openAddTrip} onOpenChange={setOpenAddTrip}>
               <DialogTrigger asChild>
                 <Button className="font-xl dark:bg-white" size="lg">
                   + New Trip
@@ -196,21 +196,14 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
               </DialogContent>
             </Dialog>
           ) : (
-            <Drawer open={openTripDetails} onOpenChange={setOpenTripDetails}>
+            <Drawer open={openAddTrip} onOpenChange={setOpenAddTrip}>
               <DrawerTrigger asChild>
                 <Button className="font-xl dark:bg-white" size="lg">
                   + New Trip
                 </Button>
               </DrawerTrigger>
               <DrawerContent>
-                <DrawerHeader className="text-left">
-                  <DrawerTitle className="text-xl font-semibold">
-                    Add Trip
-                  </DrawerTitle>
-                  <DrawerDescription>
-                    Input your trip details. Click save when you&apos;re done.
-                  </DrawerDescription>
-                </DrawerHeader>
+                <DrawerHeader className="text-left"></DrawerHeader>
                 <AddTripForm className="p-6" />
                 <DrawerFooter className="pt-2">
                   <DrawerClose asChild>
