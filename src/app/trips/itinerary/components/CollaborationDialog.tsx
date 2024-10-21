@@ -1,6 +1,17 @@
 "use client";
 
 import { useTripsContext } from "@/app/_context/AppContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,12 +28,18 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { addUserRole, getUserRoles } from "@/utils/supabase/supabaseRequests";
+import {
+  addUserRole,
+  deleteUserRole,
+  getUserRoles,
+  updateUserRole,
+} from "@/utils/supabase/supabaseRequests";
 import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Database } from "../../../../../database.types";
@@ -32,30 +49,64 @@ type Users = Database["public"]["Tables"]["user_roles"]["Row"];
 
 type Role = "view" | "edit";
 
-const CollaborationDialog = ({ isOpen, onClose, itineraryId }) => {
+interface CollaborationDialog {
+  isOpen: boolean;
+  onClose: () => void;
+  itineraryId: string;
+  ownerId: string;
+}
+
+const CollaborationDialog = ({
+  isOpen,
+  onClose,
+  itineraryId,
+  ownerId,
+}: CollaborationDialog) => {
   const [users, setUsers] = useState<Users[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSubmittingRole, setIsSubmittingRole] = useState<boolean>(false);
+  const [isUpdatingRole, setIsUpdatingRole] = useState<boolean>(false);
+
   const [emailAddress, setEmailAddress] = useState<string | null>(null);
   const [role, setRole] = useState<Role | null>(null);
 
   const { getToken } = useTripsContext();
 
-  //   useEffect(() => {
-  //     console.log(emailAddress);
-  //     console.log(role);
-  //   }, [emailAddress, role]);
+  const resetValues = () => {
+    setEmailAddress(null);
+    setRole(null);
+  };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
+  const handleSubmitRole = async () => {
+    setIsSubmittingRole(true);
     // Check if fields are complete
     if (!emailAddress || !role || emailAddress === "") {
       toast({
-        title: "Fill up details.",
+        title: "Fill up details",
         description: "Both email address and access level fields are required.",
-        variant: "destructive",
+        variant: "default",
       });
-      setIsSubmitting(false);
+      setIsSubmittingRole(false);
+      return;
+    }
+
+    // Identify if the email address already has access
+    const roleForUserExists = users?.find((user) => {
+      if (user.email_address === emailAddress) {
+        return true;
+      }
+      return false;
+    });
+
+    if (roleForUserExists) {
+      toast({
+        title: "Access already exists for user",
+        description:
+          "You can manage the user's access level in the section above.",
+        variant: "default",
+      });
+      setIsSubmittingRole(false);
+
       return;
     }
 
@@ -65,13 +116,79 @@ const CollaborationDialog = ({ isOpen, onClose, itineraryId }) => {
       emailAddress,
       role,
       itineraryId,
+      ownerId,
     });
 
     if (result) {
-      console.log(result[0]);
+      setUsers((prev) => [...prev, result[0]]);
+      resetValues();
+      toast({
+        title: "Collaborator added.",
+        description: `${result[0].first_name} ${result[0].last_name} has been added as collaborator.`,
+        variant: "default",
+      });
+      // NEXT TASK: Set Users temporarily on success and add toast
+      // THEN: Setup the changing of privilege -> changing from view to edit vice-versa
     }
 
-    setIsSubmitting(false);
+    setIsSubmittingRole(false);
+  };
+
+  const handleUpdateRole = async (role: string, roleId: string) => {
+    setIsUpdatingRole(true);
+
+    const token = await getToken({ template: "lakbai-supabase" });
+    const result = await updateUserRole({ token, role, roleId });
+
+    if (result && result.length !== 0) {
+      setUsers((prev) => {
+        return prev.map((u) => (u.id === roleId ? { ...u, role } : u));
+      });
+      toast({
+        title: "User role updated",
+        description: `Role has been updated to ${role}.`,
+        variant: "default",
+      });
+
+      setIsUpdatingRole(false);
+    }
+
+    toast({
+      title: "Uh oh! Something went wrong.",
+      description: `The role has not been updated. Try again.`,
+      variant: "default",
+    });
+    setIsUpdatingRole(false);
+  };
+
+  const handleDeleteRole = async (roleId: string) => {
+    setIsUpdatingRole(true);
+    const token = await getToken({ template: "lakbai-supabase" });
+    const result = await deleteUserRole({ token, roleId });
+    console.log(result);
+
+    if (result && result.length !== 0) {
+      setUsers((prev) => {
+        return prev.filter((u) => u.id !== roleId);
+      });
+
+      toast({
+        title: "Collaborator removed",
+        description: `User has been removed from the collaboration list.`,
+        variant: "default",
+      });
+
+      setIsUpdatingRole(false);
+      return;
+    }
+
+    toast({
+      title: "Uh oh! Something went wrong.",
+      description: `The role has not been updated. Try again.`,
+      variant: "default",
+    });
+    setIsUpdatingRole(false);
+    return;
   };
 
   useEffect(() => {
@@ -82,9 +199,6 @@ const CollaborationDialog = ({ isOpen, onClose, itineraryId }) => {
 
       if (result) {
         setUsers(result);
-
-        // NEXT TASK: Set Users temporarily on success
-        // THEN: Setup the changing of privilege -> changing from view to edit vice-versa
       }
       setIsLoading(false);
     };
@@ -130,7 +244,11 @@ const CollaborationDialog = ({ isOpen, onClose, itineraryId }) => {
                       </p>
                     </div>
                   </div>
-                  <Select value={user.role}>
+                  <Select
+                    disabled={isUpdatingRole}
+                    value={user.role}
+                    onValueChange={(value) => handleUpdateRole(value, user.id)}
+                  >
                     <SelectTrigger className="w-auto sm:w-[130px]">
                       <SelectValue placeholder="Access level" />
                     </SelectTrigger>
@@ -138,6 +256,34 @@ const CollaborationDialog = ({ isOpen, onClose, itineraryId }) => {
                       <SelectGroup>
                         <SelectItem value="edit">Can Edit</SelectItem>
                         <SelectItem value="view">Can View</SelectItem>
+                        <SelectSeparator />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              className={`text-sm font-normal w-full justify-center space-x-1 flex`}
+                              variant="default"
+                            >
+                              Remove access
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will delete the role for {user.first_name}{" "}
+                                {user.last_name}. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteRole(user.id)}
+                              >
+                                Continue
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -164,10 +310,10 @@ const CollaborationDialog = ({ isOpen, onClose, itineraryId }) => {
           </div>
           <Button
             className="min-w-24"
-            disabled={isSubmitting}
-            onClick={handleSubmit}
+            disabled={isSubmittingRole}
+            onClick={handleSubmitRole}
           >
-            {!isSubmitting ? (
+            {!isSubmittingRole ? (
               "Add User"
             ) : (
               <Loader width={14} height={14} className="animate-spin" />
@@ -177,13 +323,15 @@ const CollaborationDialog = ({ isOpen, onClose, itineraryId }) => {
 
         <div className="flex space-x-2">
           <Input
-            disabled={isSubmitting}
+            required
+            name="email"
+            disabled={isSubmittingRole}
             className="flex-grow"
             value={emailAddress ?? ""}
             onChange={(e) => setEmailAddress(e.target.value)}
           />
           <Select
-            disabled={isSubmitting}
+            disabled={isSubmittingRole}
             value={role ?? ""}
             onValueChange={(value) => setRole(value as Role)}
           >

@@ -77,6 +77,7 @@ interface AddUserRole {
   emailAddress: string;
   role: string;
   itineraryId: string;
+  ownerId: string;
 }
 
 interface ClerkUsers {
@@ -85,6 +86,17 @@ interface ClerkUsers {
   first_name: string;
   last_name: string;
   image_url: string;
+}
+
+interface UpdateUserRole {
+  token: string | null;
+  role: string;
+  roleId: string;
+}
+
+interface DeleteUserRole {
+  token: string | null;
+  roleId: string;
 }
 
 type ItineraryType = Itinerary[];
@@ -253,9 +265,9 @@ export const addItinerary = async ({
 
   if (error) {
     toast({
-      title: "Insertion Error. Try again later.",
+      title: "Uh oh! Something went wrong.",
       description: `Failed to create itinerary: ${error.message}`,
-      variant: "destructive",
+      variant: "default",
     });
     return;
   }
@@ -318,7 +330,7 @@ export const updateDay = async ({
       .eq("id", itineraryId)
       .select();
     if (error) {
-      console.error("Insertion Error. Try again later.");
+      console.error("Insertion Error: ", error.message);
       return;
     }
     return data;
@@ -330,7 +342,7 @@ export const updateDay = async ({
       .select();
 
     if (error) {
-      console.error("Deletion Error. Try again later.");
+      console.error("Deletion Error: ", error.message);
       return;
     }
     return data;
@@ -435,6 +447,7 @@ export const addUserRole = async ({
   emailAddress,
   role,
   itineraryId,
+  ownerId,
 }: AddUserRole) => {
   try {
     const { data } = await axios.get<ClerkUsers[]>("/api/users");
@@ -449,30 +462,17 @@ export const addUserRole = async ({
         title: "User does not exist",
         description:
           "Please verify the email address, or ensure that the user has an existing account.",
-        variant: "destructive",
+        variant: "default",
       });
       return;
     }
 
-    // Identify if the email address already has access
-    const userRole = await getUserRoles({
-      token,
-      userId: userToBeAdded.user_id,
-    });
-
-    const roleForUserExists = userRole?.find((user) => {
-      if (user.itinerary_id === itineraryId) {
-        return true;
-      }
-      return false;
-    });
-
-    if (roleForUserExists) {
+    if (ownerId === userToBeAdded.user_id) {
       toast({
-        title: "Access already exists for user",
+        title: "Owner of the itinerary.",
         description:
-          "You can manage the user's access level in the section above.",
-        variant: "destructive",
+          "You are the current owner of this trip. No need to add as collaborator",
+        variant: "default",
       });
       return;
     }
@@ -500,4 +500,47 @@ export const addUserRole = async ({
       error
     );
   }
+};
+
+export const updateUserRole = async ({
+  token,
+  role,
+  roleId,
+}: UpdateUserRole) => {
+  const supabase = await supabaseClient(token);
+  const { data, error } = await supabase
+    .from("user_roles")
+    .update({ role })
+    .eq("id", roleId)
+    .select();
+
+  console.log(error);
+
+  if (error) {
+    console.error(
+      "There has been an error updating user role: ",
+      error.message
+    );
+    return;
+  }
+
+  return data as UserRoles[];
+};
+
+export const deleteUserRole = async ({ token, roleId }: DeleteUserRole) => {
+  const supabase = await supabaseClient(token);
+  const { data, error } = await supabase
+    .from("user_roles")
+    .delete()
+    .eq("id", roleId)
+    .select();
+
+  if (error) {
+    console.error(
+      "There has been an error updating user role: ",
+      error.message
+    );
+    return;
+  }
+  return data;
 };

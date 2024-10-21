@@ -106,7 +106,6 @@ import {
   useState,
 } from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
-import { useMediaQuery } from "usehooks-ts";
 import { Database } from "../../../../database.types";
 import CollaborationDialog from "./components/CollaborationDialog";
 import ShareItineraryDialog from "./components/ShareItineraryDialog";
@@ -122,7 +121,7 @@ const ItineraryPage: FC<FetchTripData> = ({
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // const isDesktop = useMediaQuery("(min-width: 768px)");
+
   const [itineraryDetails, setItineraryDetails] =
     useState<ItineraryDetails | null>(itinerary?.[0] ?? null);
   const [tripActivities, setTripActivities] = useState<Activities[] | null>(
@@ -249,7 +248,7 @@ const ItineraryPage: FC<FetchTripData> = ({
       toast({
         title: "Day count exceeded",
         description: `Maximum number of days is ${MAX_DAYS}`,
-        variant: "destructive",
+        variant: "default",
       });
       return;
     }
@@ -345,7 +344,7 @@ const ItineraryPage: FC<FetchTripData> = ({
       toast({
         title: "Deletion failed.",
         description: "Please try again later.",
-        variant: "destructive",
+        variant: "default",
       });
       return;
     }
@@ -395,7 +394,7 @@ const ItineraryPage: FC<FetchTripData> = ({
         title: "Update Error",
         description:
           "There has been an error updating the trip. Please try again.",
-        variant: "destructive",
+        variant: "default",
       });
       return;
     }
@@ -425,7 +424,7 @@ const ItineraryPage: FC<FetchTripData> = ({
       toast({
         title: "Update failed",
         description: "There has been an error updating the value.",
-        variant: "destructive",
+        variant: "default",
       });
       syncTripsWithDb();
     }
@@ -454,7 +453,7 @@ const ItineraryPage: FC<FetchTripData> = ({
               </Badge>
 
               <Badge variant="outline">
-                {numOfPeople?.display ?? "👹 69 Bachelors"}
+                {numOfPeople?.display.split("(")[0] ?? "👹 69 Bachelors"}
               </Badge>
               <Badge variant="outline">
                 📅 {dateStartFormatted} to {dateEndFormatted}
@@ -478,6 +477,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                         isOpen={isCollabDialogOpen}
                         onClose={() => setIsCollabDialogOpen(false)}
                         itineraryId={itineraryDetails!.id}
+                        ownerId={itineraryDetails!.owner_id}
                       />
                     )}
                   </>
@@ -939,7 +939,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                 )}
 
                 {/* Reminder Message */}
-                <div className="flex flex-col md:flex-row items-center space-x-2 p-4 rounded-xl border-ring border-1 border-dashed bg-primary">
+                <div className="flex flex-col md:flex-row items-center space-x-2 p-4 rounded-xl border-ring border-1 border-dashed bg-primary select-none">
                   <div className="flex items-center space-x-2">
                     <Info
                       width={15}
@@ -1029,7 +1029,7 @@ const ActivityCard = ({
         title: "Update Error",
         description:
           "There has been an error updating the activity. Please try again.",
-        variant: "destructive",
+        variant: "default",
       });
       return;
     }
@@ -1048,7 +1048,7 @@ const ActivityCard = ({
       toast({
         title: "Deletion failed.",
         description: "Please try again later.",
-        variant: "destructive",
+        variant: "default",
       });
       return;
     }
@@ -1116,9 +1116,13 @@ const ActivityCard = ({
               <Label className="text-left">Description</Label>
               <div className="flex items-center justify-start text-sm col-span-3 bg-card/35 border-border border-2 p-3 rounded-lg">
                 <p>
-                  {description || description!.length >= 1
-                    ? description
-                    : "No description for this activity."}
+                  {description || description!.length >= 1 ? (
+                    description
+                  ) : (
+                    <span className="select-none text-gray-700/70">
+                      No description for this activity.
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -1368,7 +1372,7 @@ const AddActivitySheet = ({
   const {
     activityData,
     setActivityData,
-    submitTrip,
+    submitActivity,
     isFormComplete,
     setIsFormComplete,
   } = useActivitiesContext();
@@ -1384,14 +1388,10 @@ const AddActivitySheet = ({
 
   async function handleSubmitActivity() {
     setIsSubmitting(true);
-    const result = await submitTrip({ itineraryId, day });
+    const result = await submitActivity({ itineraryId, day });
     if (!result) {
       setIsSubmitting(false);
-      toast({
-        title: "Insertion failed.",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
+
       return;
     }
 

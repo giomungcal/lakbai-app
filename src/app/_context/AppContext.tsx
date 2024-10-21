@@ -132,13 +132,14 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
           itineraryDetails,
           token,
         });
-        resetValues();
+
         if (itinerary) {
           toast({
             title: "Success!",
             description: "Itinerary added successfully!",
             variant: "default",
           });
+          resetValues();
         }
         return itinerary;
       } else {
@@ -213,7 +214,7 @@ interface ActivitiesContext {
 
   activityData: ActivityData;
   setActivityData: Dispatch<SetStateAction<ActivityData>>;
-  submitTrip: ({
+  submitActivity: ({
     itineraryId,
     day,
   }: AddActivity) => Promise<ActivitiesDetails[] | undefined>;
@@ -276,7 +277,7 @@ export const ActivitiesContextProvider = ({
     }
   };
 
-  const submitTrip = async ({ itineraryId, day }: AddActivity) => {
+  const submitActivity = async ({ itineraryId, day }: AddActivity) => {
     if (!validationForm()) {
       setIsFormComplete(false);
       return;
@@ -294,6 +295,11 @@ export const ActivitiesContextProvider = ({
         setIsFormComplete(null);
         return result;
       }
+      toast({
+        title: "Uh oh! Something went wrong.",
+        description: "Failed to add activity. Please try again.",
+        variant: "default",
+      });
       return;
     }
   };
@@ -321,7 +327,7 @@ export const ActivitiesContextProvider = ({
 
         activityData,
         setActivityData,
-        submitTrip,
+        submitActivity,
         isFormComplete,
         setIsFormComplete,
         requestComplete,
