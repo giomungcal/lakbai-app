@@ -767,7 +767,7 @@ const ItineraryPage: FC<FetchTripData> = ({
         <div className="h-px w-full bg-slate-200"></div>
 
         {/* Itinerary Section */}
-        <section className="flex flex-col space-y-10 mt-8  w-full">
+        <section className="flex flex-col space-y-10 mt-8 w-full">
           <div className="flex flex-col sm:flex-row space-y-2 justify-between">
             <div className="space-y-2 text-left">
               <h1 className="text-4xl font-bold">Itinerary</h1>
@@ -853,6 +853,8 @@ const ItineraryPage: FC<FetchTripData> = ({
           <div className="h-px w-full bg-slate-200"></div>
 
           {/* Activities Display Section  */}
+
+          {/* Days Count === 0 */}
           {itineraryDetails!.days_count === 0 && (
             <div className="w-full flex flex-col justify-center items-center min-h-56 space-y-1 bg-card border-border border-2 border-dashed rounded-xl transition-all">
               <span className="text-2xl">👻</span>
@@ -923,6 +925,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                     )}
                   </div>
                 ) : (
+                  // Display all activity cards
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredActivities.map((a) => (
                       <ActivityCard
