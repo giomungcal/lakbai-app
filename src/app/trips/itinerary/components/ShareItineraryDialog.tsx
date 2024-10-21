@@ -11,13 +11,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
+interface ShareItineraryDialog {
+  isOpen: boolean;
+  onClose: () => void;
+  isPublic: boolean;
+  onPublicChange: () => void;
+  isOwner: boolean;
+}
+
 const ShareItineraryDialog = ({
   isOpen,
   onClose,
   isPublic,
   onPublicChange,
   isOwner,
-}) => {
+}: ShareItineraryDialog) => {
+  console.log(window.location.href);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-8 space-y-2">
@@ -28,8 +38,12 @@ const ShareItineraryDialog = ({
           </DialogDescription>
         </DialogHeader>
         <div className="flex gap-2">
-          <Input className="flex-grow" />
-          <Button variant="default" className="max-w-36">
+          <Input className="flex-grow" defaultValue={window.location.href} />
+          <Button
+            variant="default"
+            className="max-w-36"
+            onClick={() => navigator.clipboard.writeText(window.location.href)}
+          >
             Copy Link
           </Button>
         </div>

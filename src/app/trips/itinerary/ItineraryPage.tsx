@@ -406,13 +406,6 @@ const ItineraryPage: FC<FetchTripData> = ({
   };
 
   const handlePublicChange = async () => {
-    setItineraryDetails((prev) => {
-      if (prev) {
-        return { ...prev, is_public: !prev.is_public };
-      }
-      return prev;
-    });
-
     const token = await getToken({ template: "lakbai-supabase" });
     const result = await updatePublic({
       token,
@@ -420,14 +413,29 @@ const ItineraryPage: FC<FetchTripData> = ({
       isPublic: !itineraryDetails?.is_public,
     });
 
-    if (!result) {
+    if (result && result.length !== 0) {
+      setItineraryDetails((prev) => {
+        if (prev) {
+          return { ...prev, is_public: !prev.is_public };
+        }
+        return prev;
+      });
       toast({
-        title: "Update failed",
-        description: "There has been an error updating the value.",
+        title: "Public Access updated.",
+        description: "Successfully updated the public access.",
         variant: "default",
       });
-      syncTripsWithDb();
+      return;
     }
+
+    toast({
+      title: "Uh oh! Something went wrong.",
+      description:
+        "There has been an error updating the public access. Try again.",
+      variant: "default",
+    });
+    syncTripsWithDb();
+    return;
   };
 
   return (
@@ -497,7 +505,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                     onClose={() => {
                       setIsShareDialogOpen(false);
                     }}
-                    isPublic={itineraryDetails?.is_public}
+                    isPublic={itineraryDetails?.is_public ?? false}
                     onPublicChange={handlePublicChange}
                     isOwner={userRole === "owner"}
                   />
