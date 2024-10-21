@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  defaultActivityAdd,
   useActivitiesContext,
   useTripsContext,
 } from "@/app/_context/AppContext";
@@ -18,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -38,27 +37,21 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
-  deleteActivity,
   deleteItinerary,
   getSpecificActivity,
   getSpecificItinerary,
@@ -68,15 +61,8 @@ import {
 import {
   EMOJIS,
   EmojiValue,
-  HOURS,
-  HourType,
   MAX_DAYS,
-  MINUTE,
-  MinuteType,
   NUMBER_OF_PEOPLE,
-  PERIOD,
-  PeriodType,
-  UserRole,
 } from "@/validators/options";
 import { format } from "date-fns";
 import {
@@ -84,29 +70,20 @@ import {
   EllipsisVertical,
   Info,
   Loader,
-  Map,
   Minus,
-  Notebook,
   Plus,
   Printer,
   Share,
   SquarePen,
   Trash,
-  TriangleAlert,
   Users,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Dispatch,
-  FC,
-  SetStateAction,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import { Database } from "../../../../database.types";
+import ActivityCard from "./components/ActivityCard";
+import AddActivitySheet from "./components/AddActivitySheet";
 import CollaborationDialog from "./components/CollaborationDialog";
 import ShareItineraryDialog from "./components/ShareItineraryDialog";
 import { FetchTripData } from "./page";
@@ -978,601 +955,3 @@ const ItineraryPage: FC<FetchTripData> = ({
 };
 
 export default ItineraryPage;
-
-interface Time {
-  hour: string;
-  minute: string;
-  period: string;
-}
-
-const ActivityCard = ({
-  activities,
-  userRole,
-  onSuccess,
-}: {
-  activities: Activities;
-  userRole: UserRole;
-  onSuccess: () => void;
-}) => {
-  const { name, time, address, description, id: activityId } = activities;
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isViewOpen, setIsViewOpen] = useState(false);
-  const [deleteAlert, setDeleteAlert] = useState(false);
-  const { editData, setEditData, editActivity, getToken } =
-    useActivitiesContext();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const timeHour = time && time.split(":")[0];
-  const timeMinute = time && time.split(":")[1].split(" ")[0];
-  const timePeriod = time && time.split(" ")[1];
-  const [editTime, setEditTime] = useState<Time>({
-    hour: timeHour ?? "8",
-    minute: timeMinute ?? "00",
-    period: timePeriod ?? "AM",
-  });
-
-  function handleEditData() {
-    setIsEditOpen(true);
-    setEditData({ name, time, address, description });
-  }
-
-  async function handleEditSubmit() {
-    setIsSubmitting(true);
-
-    if (
-      editData.name === name &&
-      editData.address === address &&
-      editData.time === time &&
-      editData.description === description
-    ) {
-      toast({
-        title: "No changes were made",
-        description: "Your activity details remain the same.",
-        variant: "default",
-      });
-      setIsEditOpen(false);
-      setIsSubmitting(false);
-      return;
-    }
-
-    const result = await editActivity({ activityId });
-    if (!result) {
-      setIsSubmitting(false);
-      // setEditData({ name, time, address, description });
-
-      toast({
-        title: "Update Error",
-        description:
-          "There has been an error updating the activity. Please try again.",
-        variant: "default",
-      });
-      return;
-    }
-
-    if (result.length >= 1) {
-      setIsEditOpen(false);
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleDeleteActivity() {
-    const token = await getToken({ template: "lakbai-supabase" });
-    const error = await deleteActivity({ token, activityId });
-
-    if (error) {
-      toast({
-        title: "Deletion failed.",
-        description: "Please try again later.",
-        variant: "default",
-      });
-      return;
-    }
-    // Update the state with database
-    onSuccess();
-    return;
-  }
-
-  useEffect(() => {
-    const time = `${editTime.hour}:${editTime.minute} ${editTime.period}`;
-    setEditData((prev) => ({ ...prev, time }));
-  }, [editTime, setEditData]);
-
-  return (
-    <div
-      className={`relative w-full h-full flex items-center space-x-4 bg-card border-accent border-2 rounded-2xl p-6 hover:bg-primary/50 transition-all cursor-pointer`}
-    >
-      {/* Card Details */}
-      <div className=" flex-grow text-left space-y-1 pr-6">
-        <p className="text-sm text-muted-foreground font-semibold">{time}</p>
-        <h2 className="text-title text-xl font-extrabold">{name}</h2>
-        <p className="text-xs text-muted-foreground font-medium line-clamp-2">
-          {address}
-        </p>
-        <p className="text-sm text-card-foreground line-clamp-2">
-          {description}
-        </p>
-      </div>
-
-      {/* View Details Button (whole card) */}
-      <div
-        onClick={() => setIsViewOpen(true)}
-        className="absolute inset-0 z-10"
-      />
-
-      {/* [VIEW] Activity Detail Sheet  */}
-      <Sheet open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <SheetContent className="overflow-auto">
-          <SheetHeader>
-            <SheetTitle>Activity Details</SheetTitle>
-            <SheetDescription>
-              View of the full details of the selected activity.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="grid gap-4 py-4">
-            <div className="flex flex-col space-y-2">
-              <Label className="text-left">Name</Label>
-              <div className="flex items-center justify-start text-sm col-span-3 bg-card/35 border-border border-2 p-3 rounded-lg">
-                <p>{name}</p>
-              </div>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Label className="text-left">Location</Label>
-              <div className="flex items-center justify-start text-sm col-span-3 bg-card/35 border-border border-2 p-3 rounded-lg">
-                <p>{address}</p>
-              </div>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Label className="text-left">Time</Label>
-              <div className="flex items-center justify-start text-sm col-span-3 bg-card/35 border-border border-2 p-3 rounded-lg">
-                <p>{time}</p>
-              </div>
-            </div>
-            <div className="flex flex-col space-y-2">
-              <Label className="text-left">Description</Label>
-              <div className="flex items-center justify-start text-sm col-span-3 bg-card/35 border-border border-2 p-3 rounded-lg">
-                <p>
-                  {description || description!.length >= 1 ? (
-                    description
-                  ) : (
-                    <span className="select-none text-gray-700/70">
-                      No description for this activity.
-                    </span>
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-          <SheetFooter>
-            <Link
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURI(
-                address!
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={buttonVariants({ variant: "default" })}
-            >
-              See Location
-            </Link>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-      {/* Activity Options Button */}
-      {(userRole === "owner" || userRole === "edit") && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <div className="absolute top-5 right-5 size-7 rounded-full bg-accent/50 text-accent-foreground/50 flex justify-center items-center z-20 hover:bg-accent transition-colors">
-              <EllipsisVertical width={15} height={15} />
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onSelect={handleEditData}
-            >
-              <SquarePen className="mr-2 h-4 w-4" />
-              <span>Edit Activity</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem className="cursor-pointer">
-              <Map className="mr-2 h-4 w-4" />
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURI(
-                  address!
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Open in Maps
-              </a>
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onSelect={() => setDeleteAlert(true)}
-            >
-              <Trash className="mr-2 h-4 w-4" />
-              <span>Delete Activity</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-
-      {/* Delete Activity Alert Dialog */}
-      {(userRole === "owner" || userRole === "edit") && (
-        <AlertDialog open={deleteAlert} onOpenChange={setDeleteAlert}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will delete the currently selected activity. This action
-                cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteActivity}>
-                Continue
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-
-      {/* [EDIT] Editing Screen */}
-      {(userRole === "owner" || userRole === "edit") && (
-        <Sheet open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <SheetContent className="max-w-[940px]">
-            <SheetHeader>
-              <SheetTitle>Edit activity</SheetTitle>
-              <SheetDescription>
-                Make changes to this activity here. Click save when you&apos;re
-                done.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">Name</Label>
-                <Input
-                  disabled={isSubmitting}
-                  id="name"
-                  className="col-span-3"
-                  value={editData.name ?? ""}
-                  onChange={(e) =>
-                    setEditData((prev) => ({ ...prev, name: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="text-right">Location</Label>
-                <div className="col-span-3">
-                  <GooglePlacesAutocomplete
-                    apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
-                    selectProps={{
-                      isDisabled: isSubmitting,
-                      defaultInputValue: editData.address ?? "",
-                      onChange: (value) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          address: value!.label,
-                        })),
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label className="col-span-1 text-right">Time</Label>
-
-                {/* Hour */}
-                <Select
-                  disabled={isSubmitting}
-                  value={editTime.hour}
-                  onValueChange={(value) =>
-                    setEditTime((prev) => ({
-                      ...prev,
-                      hour: value as HourType,
-                    }))
-                  }
-                >
-                  <SelectTrigger id="framework">
-                    <SelectValue placeholder="00" />
-                  </SelectTrigger>
-                  <SelectContent className="col-span-1" position="popper">
-                    {HOURS.map((i) => (
-                      <SelectItem key={i} value={i}>
-                        {i}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Minute */}
-                <Select
-                  disabled={isSubmitting}
-                  value={editTime.minute}
-                  onValueChange={(value) =>
-                    setEditTime((prev) => ({
-                      ...prev,
-                      minute: value as MinuteType,
-                    }))
-                  }
-                >
-                  <SelectTrigger id="framework">
-                    <SelectValue placeholder="00" />
-                  </SelectTrigger>
-                  <SelectContent className="col-span-1" position="popper">
-                    {MINUTE.map((i) => (
-                      <SelectItem key={i} value={i}>
-                        {i}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Period */}
-                <Select
-                  disabled={isSubmitting}
-                  value={editTime.period}
-                  onValueChange={(value) =>
-                    setEditTime((prev) => ({
-                      ...prev,
-                      period: value as PeriodType,
-                    }))
-                  }
-                >
-                  <SelectTrigger id="framework">
-                    <SelectValue placeholder="AM" />
-                  </SelectTrigger>
-                  <SelectContent className="col-span-1" position="popper">
-                    {PERIOD.map((i) => (
-                      <SelectItem key={i} value={i}>
-                        {i}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-4 items-start  gap-4">
-                <Label className="text-right mt-2">Description</Label>
-                <Textarea
-                  disabled={isSubmitting}
-                  id="username"
-                  className="col-span-3"
-                  value={editData.description ?? ""}
-                  onChange={(e) =>
-                    setEditData((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-            </div>
-            <SheetFooter>
-              <Button disabled={isSubmitting} onClick={handleEditSubmit}>
-                {isSubmitting ? (
-                  <div className="flex space-x-2 justify-center items-center">
-                    <Loader width={12} height={12} className="animate-spin" />
-                    <span>Updating..</span>
-                  </div>
-                ) : (
-                  "Save changes"
-                )}
-              </Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
-      )}
-    </div>
-  );
-};
-
-interface AddActivitySheet {
-  isAddActivityOpen: boolean;
-  setIsAddActivityOpen: Dispatch<SetStateAction<boolean>>;
-  itineraryId: string | undefined;
-  selectedDay: string;
-}
-
-const AddActivitySheet = ({
-  isAddActivityOpen,
-  setIsAddActivityOpen,
-  itineraryId,
-  selectedDay: day,
-}: AddActivitySheet) => {
-  const {
-    activityData,
-    setActivityData,
-    submitActivity,
-    isFormComplete,
-    setIsFormComplete,
-  } = useActivitiesContext();
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!isAddActivityOpen) {
-      setActivityData(defaultActivityAdd);
-      setIsFormComplete(null);
-    }
-  }, [isAddActivityOpen, setActivityData, setIsFormComplete]);
-
-  async function handleSubmitActivity() {
-    setIsSubmitting(true);
-    const result = await submitActivity({ itineraryId, day });
-    if (!result) {
-      setIsSubmitting(false);
-
-      return;
-    }
-
-    if (result.length !== 0) {
-      setIsAddActivityOpen(false);
-      setIsSubmitting(false);
-    }
-  }
-
-  return (
-    <Sheet open={isAddActivityOpen} onOpenChange={setIsAddActivityOpen}>
-      <SheetContent className="max-w-[940px]">
-        <SheetHeader>
-          <SheetTitle>Add activity</SheetTitle>
-          <SheetDescription>
-            Add details to your activity here. Click save when you&apos;re done.
-          </SheetDescription>
-        </SheetHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Title</Label>
-            <Input
-              disabled={isSubmitting}
-              id="title"
-              className="col-span-3"
-              placeholder="Trekking at.."
-              value={activityData.name}
-              onChange={(e) =>
-                setActivityData((prev) => ({ ...prev, name: e.target.value }))
-              }
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Location</Label>
-            <div className="col-span-3">
-              <GooglePlacesAutocomplete
-                apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
-                selectProps={{
-                  isDisabled: isSubmitting,
-                  onChange: (value) =>
-                    setActivityData((prev) => ({
-                      ...prev,
-                      address: value!.label,
-                    })),
-                }}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="col-span-1 text-right">Time</Label>
-
-            <Select
-              disabled={isSubmitting}
-              defaultValue={activityData.hour}
-              onValueChange={(value) =>
-                setActivityData((prev) => ({
-                  ...prev,
-                  hour: value as HourType,
-                }))
-              }
-            >
-              <SelectTrigger id="framework">
-                <SelectValue placeholder="00" />
-              </SelectTrigger>
-              <SelectContent className="col-span-1" position="popper">
-                {HOURS.map((i) => (
-                  <SelectItem key={i} value={i}>
-                    {i}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              disabled={isSubmitting}
-              defaultValue={activityData.minute}
-              onValueChange={(value) =>
-                setActivityData((prev) => ({
-                  ...prev,
-                  minute: value as MinuteType,
-                }))
-              }
-            >
-              <SelectTrigger id="framework">
-                <SelectValue placeholder="00" />
-              </SelectTrigger>
-              <SelectContent className="col-span-1" position="popper">
-                {MINUTE.map((i) => (
-                  <SelectItem key={i} value={i}>
-                    {i}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              disabled={isSubmitting}
-              defaultValue={activityData.period}
-              onValueChange={(value) =>
-                setActivityData((prev) => ({
-                  ...prev,
-                  period: value as PeriodType,
-                }))
-              }
-            >
-              <SelectTrigger id="framework">
-                <SelectValue placeholder="AM" />
-              </SelectTrigger>
-              <SelectContent className="col-span-1" position="popper">
-                {PERIOD.map((i) => (
-                  <SelectItem key={i} value={i}>
-                    {i}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-start  gap-4">
-            <Label className="text-right mt-2">Description</Label>
-            <Textarea
-              disabled={isSubmitting}
-              id="description"
-              className="col-span-3"
-              placeholder="Ride a tricycle to.."
-              onChange={(e) =>
-                setActivityData((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
-            />
-          </div>
-          {isFormComplete === false && (
-            <div className="flex text-xs items-center justify-center text-left space-x-2 p-2 rounded-md border-destructive/40 border-2 border-dashed bg-red-200/80 ">
-              <div className="flex items-center text-left space-x-2">
-                <TriangleAlert
-                  width={12}
-                  height={12}
-                  className="shrink-0 text-foreground"
-                />
-              </div>
-              <p className="text-foreground">Please fill up missing fields.</p>
-            </div>
-          )}
-          <div className="flex text-xs items-center justify-center text-left space-x-2 p-2 rounded-md border-ring border-1 border-dashed bg-secondary/70">
-            <div className="flex items-center text-left space-x-2">
-              <Info width={12} height={12} className="shrink-0 text-title/70" />
-              {/* <span className="text-title/80 font-semibold">Note: </span> */}
-            </div>
-            <p className="text-title">
-              Activities are automatically sorted based on time.
-            </p>
-          </div>
-        </div>
-        <SheetFooter>
-          <Button disabled={isSubmitting} onClick={handleSubmitActivity}>
-            {isSubmitting ? (
-              <div className="flex space-x-2 justify-center items-center">
-                <Loader width={12} height={12} className="animate-spin" />
-                <span>Submitting..</span>
-              </div>
-            ) : (
-              "Save changes"
-            )}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
-  );
-};

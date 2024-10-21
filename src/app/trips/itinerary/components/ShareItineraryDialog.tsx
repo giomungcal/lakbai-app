@@ -5,11 +5,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "@/hooks/use-toast";
 
 interface ShareItineraryDialog {
   isOpen: boolean;
@@ -42,7 +42,12 @@ const ShareItineraryDialog = ({
           <Button
             variant="default"
             className="max-w-36"
-            onClick={() => navigator.clipboard.writeText(window.location.href)}
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              toast({
+                title: "Link copied to clipboard",
+              });
+            }}
           >
             Copy Link
           </Button>
