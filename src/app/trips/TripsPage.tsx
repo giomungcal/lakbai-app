@@ -77,60 +77,61 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
 
   const { addTrip } = useTripsContext();
 
-  useEffect(() => {
-    const subscribeToRealtime = async () => {
-      const supabaseToken = await getToken({
-        template: "lakbai-supabase",
-      });
-      const supabase = await supabaseClient(supabaseToken);
-      supabase.realtime.setAuth(supabaseToken);
+  // Supabase Realtime
+  // useEffect(() => {
+  //   const subscribeToRealtime = async () => {
+  //     const supabaseToken = await getToken({
+  //       template: "lakbai-supabase",
+  //     });
+  //     const supabase = await supabaseClient(supabaseToken);
+  //     supabase.realtime.setAuth(supabaseToken);
 
-      const channel = supabase
-        .channel("custom-all-channel")
-        .on(
-          "postgres_changes",
-          {
-            event: "DELETE",
-            schema: "public",
-            table: "itineraries",
-          },
-          (payload) => {
-            if (trips?.some((t) => t.id === payload.old.id)) {
-              toast({
-                title: "A trip has been deleted.",
-                variant: "default",
-              });
-              syncTripsWithDatabase();
-            }
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "itineraries",
-          },
-          (payload) => {
-            if (trips?.some((t) => t.owner_id === payload.new.owner_id)) {
-              toast({
-                title: "A trip has been updated.",
-                description: `Trip: ${payload.new.name} has been updated.`,
-                variant: "default",
-              });
-              syncTripsWithDatabase();
-            }
-          }
-        )
-        .subscribe();
+  //     const channel = supabase
+  //       .channel("custom-all-channel")
+  //       .on(
+  //         "postgres_changes",
+  //         {
+  //           event: "DELETE",
+  //           schema: "public",
+  //           table: "itineraries",
+  //         },
+  //         (payload) => {
+  //           if (trips?.some((t) => t.id === payload.old.id)) {
+  //             toast({
+  //               title: "A trip has been deleted.",
+  //               variant: "default",
+  //             });
+  //             syncTripsWithDatabase();
+  //           }
+  //         }
+  //       )
+  //       .on(
+  //         "postgres_changes",
+  //         {
+  //           event: "UPDATE",
+  //           schema: "public",
+  //           table: "itineraries",
+  //         },
+  //         (payload) => {
+  //           if (trips?.some((t) => t.owner_id === payload.new.owner_id)) {
+  //             toast({
+  //               title: "A trip has been updated.",
+  //               description: `Trip: ${payload.new.name} has been updated.`,
+  //               variant: "default",
+  //             });
+  //             syncTripsWithDatabase();
+  //           }
+  //         }
+  //       )
+  //       .subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    };
+  //     return () => {
+  //       supabase.removeChannel(channel);
+  //     };
+  //   };
 
-    subscribeToRealtime();
-  }, [trips]);
+  //   subscribeToRealtime();
+  // }, [trips]);
 
   useEffect(() => {
     setIsTripsLoading(true);
@@ -227,7 +228,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
 
       {isTripsLoading ? (
         <div className="animate-pulse flex flex-col justify-between w-[35%] h-52 bg-secondary/30 rounded-2xl p-5">
-          <div></div>
+          <div />
           <div className="w-full h-12 rounded-lg bg-secondary/60" />
         </div>
       ) : trips.length === 0 ? (

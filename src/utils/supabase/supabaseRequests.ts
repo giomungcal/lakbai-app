@@ -320,7 +320,7 @@ export const updateDay = async ({
   action,
   day,
   itineraryId,
-}: UpdateDay): Promise<ItineraryType | undefined> => {
+}: UpdateDay) => {
   const supabase = await supabaseClient(token);
 
   if (action === "add") {
@@ -333,7 +333,7 @@ export const updateDay = async ({
       console.error("Insertion Error: ", error.message);
       return;
     }
-    return data;
+    return data as ItineraryType;
   } else if (action === "delete") {
     const { data, error } = await supabase
       .from("itineraries")
@@ -345,7 +345,29 @@ export const updateDay = async ({
       console.error("Deletion Error: ", error.message);
       return;
     }
-    return data;
+
+    // Delete all activities under that specific day
+    const activitiesToDelete = await getSpecificActivity({
+      token,
+      itineraryId,
+    });
+
+    const dayOfActivitiesToDelete = day + 1;
+
+    let idsToDeleteArray: number[] = [];
+    idsToDeleteArray = activitiesToDelete
+      ? activitiesToDelete
+          ?.filter((a) => a.day === dayOfActivitiesToDelete && a)
+          .map((a) => a.id)
+      : [];
+
+    const { data: activitiesDeleted, error: activitiesError } = await supabase
+      .from("activities")
+      .delete()
+      .in("id", idsToDeleteArray)
+      .select();
+
+    return activitiesDeleted;
   }
 };
 

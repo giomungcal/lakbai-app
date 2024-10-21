@@ -179,7 +179,7 @@ const ItineraryPage: FC<FetchTripData> = ({
       Number(dayParam) <= (itineraryDetails?.days_count || 1)
     ) {
       setSelectedDay(String(dayParam));
-    } else if (itineraryDetails && itineraryDetails?.days_count >= 1) {
+    } else if (itineraryDetails && itineraryDetails.days_count > 0) {
       setSelectedDay("1");
     }
 
@@ -282,7 +282,6 @@ const ItineraryPage: FC<FetchTripData> = ({
         description: `You cannot remove any more days.`,
         variant: "default",
       });
-
       return;
     }
 
@@ -295,17 +294,22 @@ const ItineraryPage: FC<FetchTripData> = ({
       return null;
     });
 
-    if (itineraryDetails!.days_count === 0) {
-      return;
+    if (selectedDay === String(itineraryDetails!.days_count)) {
+      setSelectedDay((prev) => String(Number(prev) - 1));
     }
 
     const token = await getToken({ template: "lakbai-supabase" });
-    await updateDay({
+    const result = await updateDay({
       token,
       action: "delete",
       day: itineraryDetails!.days_count - 1,
       itineraryId: itineraryDetails!.id,
     });
+
+    if (result && result.length !== 0) {
+      console.log("Syncing..");
+      syncActivitiesWithDb();
+    }
   };
 
   const handleEditOpen = () => {
@@ -831,8 +835,8 @@ const ItineraryPage: FC<FetchTripData> = ({
                               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                               <AlertDialogDescription>
                                 This will delete the latest day which is Day{" "}
-                                {itineraryDetails?.days_count}. This action
-                                cannot be undone.
+                                {itineraryDetails?.days_count} and all of its
+                                activities. This action cannot be undone.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
