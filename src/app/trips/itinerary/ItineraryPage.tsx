@@ -438,7 +438,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                 variant="default"
                 className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap"
               >
-                🐱‍👤 Role: {capitalizedRole}
+                🥝 Role: {capitalizedRole}
               </Badge>
               <Badge
                 variant="outline"

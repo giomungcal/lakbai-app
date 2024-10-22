@@ -1,3 +1,4 @@
+import ErrorPage from "@/components/ErrorPage";
 import {
   getSpecificActivity,
   getSpecificItinerary,
@@ -92,15 +93,7 @@ const Page = async ({ searchParams }: PageProps) => {
 
   // Error 404 Page
   if (!itinerary || itinerary.length === 0) {
-    return (
-      <section className="h-full w-full flex flex-col justify-center items-center ">
-        <h1>NOPE LEAVE</h1>
-        <p>
-          The itinerary you are trying to view might not be set to public or
-          does not exist. Reach out to the owner.
-        </p>
-      </section>
-    );
+    return <ErrorPage />;
   }
 
   return (
