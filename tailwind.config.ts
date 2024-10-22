@@ -10,10 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        title: {
-          DEFAULT: "#4c6306",
-          foreground: "white",
-        },
+        title: "hsl(var(--title))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

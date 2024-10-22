@@ -1,5 +1,6 @@
 "use server";
 
+import ErrorPage from "@/components/ErrorPage";
 import { getItineraries } from "@/utils/supabase/supabaseRequests";
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
@@ -13,7 +14,7 @@ const Page = async () => {
 
   if (!userId) {
     // TO DO: Modify the 404 page for this screen
-    return notFound();
+    return <ErrorPage />;
   }
 
   async function fetchItineraries(): Promise<Itineraries[] | undefined> {

@@ -5,9 +5,7 @@ import {
   getUserRoles,
 } from "@/utils/supabase/supabaseRequests";
 import { UserRole } from "@/validators/options";
-import { users } from "@clerk/clerk-sdk-node";
-import { auth, currentUser, User } from "@clerk/nextjs/server";
-import axios from "axios";
+import { auth } from "@clerk/nextjs/server";
 import { Database } from "../../../../database.types";
 import ItineraryPage from "./ItineraryPage";
 
@@ -53,16 +51,13 @@ const Page = async ({ searchParams }: PageProps) => {
         const isOwner = itinerary.some((i) => i.owner_id === userId);
         const isPublic = itinerary.some((i) => i.is_public === true);
 
-        // Get email address
-        const User = await currentUser();
-        const emailAddress = User?.emailAddresses[0].emailAddress;
-
         if (isOwner) {
           userRole = "owner";
-        } else if (isPublic) {
-          userRole = "public";
         } else {
-          // Check if user has Edit/View Role
+          if (isPublic) {
+            userRole = "public";
+          }
+
           const userRoles = await getUserRoles({
             userId,
             token,
