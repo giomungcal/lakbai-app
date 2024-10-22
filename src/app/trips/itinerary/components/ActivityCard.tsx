@@ -165,9 +165,9 @@ const ActivityCard = ({
         <p className="text-xs text-muted-foreground font-medium line-clamp-2">
           {address}
         </p>
-        <p className="text-sm text-card-foreground line-clamp-2">
+        {/* <p className="text-sm text-card-foreground line-clamp-2">
           {description}
-        </p>
+        </p> */}
       </div>
 
       {/* View Details Button (whole card) */}

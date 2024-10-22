@@ -284,7 +284,6 @@ const ItineraryPage: FC<FetchTripData> = ({
     });
 
     if (result && result.length !== 0) {
-      console.log("Syncing..");
       syncActivitiesWithDb();
     }
   };

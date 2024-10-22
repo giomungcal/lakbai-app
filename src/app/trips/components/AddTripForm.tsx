@@ -40,6 +40,9 @@ export const AddTripForm = ({ className }: { className: string }) => {
     setEndDate,
     endDate,
 
+    isAddingTrip,
+    isAddingLakbaiTrip,
+
     itineraryDetails,
     setItineraryDetails,
   } = useTripsContext();
@@ -51,6 +54,7 @@ export const AddTripForm = ({ className }: { className: string }) => {
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="emoji">Emoji</Label>
             <Select
+              disabled={isAddingTrip}
               defaultValue={itineraryDetails.emoji}
               onValueChange={(value: EmojiValue) =>
                 setItineraryDetails((prev) => {
@@ -73,6 +77,7 @@ export const AddTripForm = ({ className }: { className: string }) => {
           <div className="flex flex-col space-y-1.5 w-full">
             <Label htmlFor="name">Trip Name</Label>
             <Input
+              disabled={isAddingTrip}
               id="name"
               maxLength={25}
               placeholder="Trip description"
@@ -90,6 +95,7 @@ export const AddTripForm = ({ className }: { className: string }) => {
           <GooglePlacesAutocomplete
             apiKey={process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}
             selectProps={{
+              isDisabled: isAddingTrip,
               onChange: (value) =>
                 setItineraryDetails((prev) => {
                   return { ...prev, address: value!.label };
@@ -99,8 +105,9 @@ export const AddTripForm = ({ className }: { className: string }) => {
         </div>
         <div className="flex flex-col space-y-1.5">
           <Label htmlFor="dateStart">Date Start</Label>
+
           <Popover>
-            <PopoverTrigger id="dateStart" asChild>
+            <PopoverTrigger disabled={isAddingTrip} id="dateStart" asChild>
               <Button
                 variant={"outline"}
                 className={cn(
@@ -138,7 +145,7 @@ export const AddTripForm = ({ className }: { className: string }) => {
         <div className="flex flex-col space-y-1.5">
           <Label htmlFor="dateEnd">Date End</Label>
           <Popover>
-            <PopoverTrigger id="dateEnd" asChild>
+            <PopoverTrigger disabled={isAddingTrip} id="dateEnd" asChild>
               <Button
                 variant={"outline"}
                 className={cn(
@@ -173,9 +180,13 @@ export const AddTripForm = ({ className }: { className: string }) => {
           <Label htmlFor="number">Number of Travelers</Label>
 
           <Select
+            disabled={isAddingTrip}
             defaultValue={itineraryDetails.num_of_people}
             onValueChange={(value: NumberOfPeopleValue) =>
-              setItineraryDetails((prev) => ({ ...prev, num_of_people: value }))
+              setItineraryDetails((prev) => ({
+                ...prev,
+                num_of_people: value,
+              }))
             }
           >
             <SelectTrigger id="number">
@@ -205,6 +216,7 @@ export const AddTripForm = ({ className }: { className: string }) => {
                   </p>
                 </div>
                 <Switch
+                  disabled={isAddingTrip}
                   checked={itineraryDetails.is_created_by_lakbai}
                   onCheckedChange={() =>
                     setItineraryDetails((prev) => ({

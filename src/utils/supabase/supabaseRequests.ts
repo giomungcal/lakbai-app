@@ -16,7 +16,7 @@ type UpdateActivityData = Database["public"]["Tables"]["activities"]["Update"];
 interface AddItinerary {
   userId: string;
   itineraryDetails: AddItineraryType;
-  token: string;
+  token: string | null;
 }
 
 interface DeleteItinerary {
@@ -48,11 +48,21 @@ interface UpdateDay {
   itineraryId: string;
 }
 
+interface GeminiActivityArray {
+  itinerary_id: string;
+  day: number;
+  time: string;
+  name: string;
+  address: string;
+  description: string;
+}
+
 interface AddActivity {
   token: string | null;
-  activityData: ActivityData;
-  day: string;
-  itineraryId: string | undefined;
+  activityData?: ActivityData;
+  day?: string;
+  itineraryId?: string | undefined;
+  geminiActivityArray?: GeminiActivityArray[];
 }
 
 interface UpdateActivity {
@@ -240,8 +250,16 @@ export const addItinerary = async ({
   itineraryDetails,
   token,
 }: AddItinerary): Promise<ItineraryType | undefined> => {
-  const { name, address, emoji, start_date, end_date, num_of_people } =
-    itineraryDetails;
+  const {
+    name,
+    address,
+    emoji,
+    start_date,
+    end_date,
+    days_count,
+    num_of_people,
+    is_created_by_lakbai,
+  } = itineraryDetails;
 
   const uuidString: string = uuidv4();
 
@@ -253,10 +271,11 @@ export const addItinerary = async ({
         id: uuidString,
         name,
         address,
+        days_count,
         emoji,
         start_date,
         end_date,
-        is_created_by_lakbai: false,
+        is_created_by_lakbai,
         owner_id: userId,
         num_of_people,
       },
@@ -376,28 +395,47 @@ export const addActivity = async ({
   itineraryId,
   day,
   activityData,
+  geminiActivityArray,
 }: AddActivity): Promise<ActivitiesType | undefined> => {
-  const { name, address, hour, minute, period, description } = activityData;
+  if (geminiActivityArray) {
+    const supabase = await supabaseClient(token);
+    const { data, error } = await supabase
+      .from("activities")
+      .insert(geminiActivityArray)
+      .select();
 
-  const time = `${hour}:${minute} ${period}`;
+    if (error) {
+      console.error(
+        "There has been an error inserting the data from Supabase: ",
+        error.message
+      );
+      return;
+    }
 
-  const supabase = await supabaseClient(token);
-  const { data, error } = await supabase
-    .from("activities")
-    .insert([
-      { itinerary_id: itineraryId, day, name, address, time, description },
-    ])
-    .select();
+    return data;
+  } else if (activityData) {
+    const { name, address, hour, minute, period, description } = activityData;
 
-  if (error) {
-    console.error(
-      "There has been an error inserting the data from Supabase: ",
-      error.message
-    );
-    return;
+    const time = `${hour}:${minute} ${period}`;
+
+    const supabase = await supabaseClient(token);
+    const { data, error } = await supabase
+      .from("activities")
+      .insert([
+        { itinerary_id: itineraryId, day, name, address, time, description },
+      ])
+      .select();
+
+    if (error) {
+      console.error(
+        "There has been an error inserting the data from Supabase: ",
+        error.message
+      );
+      return;
+    }
+
+    return data;
   }
-
-  return data;
 };
 
 export const updateActivity = async ({

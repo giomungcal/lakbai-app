@@ -1,6 +1,7 @@
 "use client";
 
 import { toast } from "@/hooks/use-toast";
+import { geminiItineraryRun } from "@/utils/gemini/gemini";
 import {
   addActivity,
   addItinerary,
@@ -14,7 +15,8 @@ import {
   NUMBER_OF_PEOPLE,
   PeriodType,
 } from "@/validators/options";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
+import { formatDistance } from "date-fns";
 import {
   createContext,
   Dispatch,
@@ -53,6 +55,8 @@ interface TripsContext {
   addTrip: () => Promise<ItineraryDetails[] | undefined>;
   itineraryDetails: ItineraryDetails;
   setItineraryDetails: Dispatch<SetStateAction<ItineraryDetails>>;
+  isAddingTrip: boolean;
+  isAddingLakbaiTrip: boolean;
 
   editTripData: UpdateItinerary;
   setEditTripData: Dispatch<SetStateAction<UpdateItinerary>>;
@@ -63,6 +67,7 @@ const defaultItinerary: ItineraryDetails = {
   id: "",
   name: "",
   address: "",
+  days_count: 0,
   emoji: EMOJIS[0]["value"],
   start_date: new Date().toISOString(),
   end_date: new Date().toISOString(),
@@ -89,13 +94,15 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
     useState<ItineraryDetails>(defaultItinerary);
   const [editTripData, setEditTripData] =
     useState<UpdateItinerary>(defaultItineraryEdit);
+  const [isAddingTrip, setIsAddingTrip] = useState<boolean>(false);
+  const [isAddingLakbaiTrip, setIsAddingLakbaiTrip] = useState<boolean>(false);
 
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
 
-  useEffect(() => {
-    console.log(itineraryDetails);
-  }, [itineraryDetails]);
+  // useEffect(() => {
+  //   console.log(itineraryDetails);
+  // }, [itineraryDetails]);
 
   function validationForm() {
     const { name, address, emoji, start_date, end_date, num_of_people } =
@@ -115,6 +122,26 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
     }
   }
 
+  // Calculate the days_count based on provided date.
+  useEffect(() => {
+    const distance = formatDistance(
+      itineraryDetails.end_date,
+      itineraryDetails.start_date
+    );
+    let numOfDays = 1;
+
+    if (distance.includes("day")) {
+      numOfDays = Number(distance.split(" ")[0]) + 1;
+
+      if (numOfDays > 5) {
+        numOfDays = 5;
+      }
+    } else if (!distance.includes("minute")) {
+      numOfDays = 5;
+    }
+    setItineraryDetails((prev) => ({ ...prev, days_count: numOfDays }));
+  }, [itineraryDetails.end_date, itineraryDetails.start_date]);
+
   function resetValues() {
     setItineraryDetails(defaultItinerary);
     setStartDate(new Date());
@@ -122,33 +149,57 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
   }
 
   async function addTrip() {
+    setIsAddingTrip(true);
+    if (itineraryDetails.is_created_by_lakbai === true) {
+      setIsAddingLakbaiTrip(true);
+    }
     if (validationForm() && userId) {
-      if (itineraryDetails.is_created_by_lakbai === true) {
-        // Put Gemini AI codebase here!!
-      }
-
       const token = await getToken({ template: "lakbai-supabase" });
 
-      if (token) {
-        const itinerary = await addItinerary({
-          userId,
-          itineraryDetails,
-          token,
-        });
+      const itinerary = await addItinerary({
+        userId,
+        itineraryDetails,
+        token,
+      });
 
-        if (itinerary) {
+      if (itinerary) {
+        if (itineraryDetails.is_created_by_lakbai === true) {
+          // Put Gemini AI codebase here!!
+          try {
+            const geminiActivityArray = await geminiItineraryRun(itinerary[0]);
+            const result = await addActivity({ token, geminiActivityArray });
+
+            if (result && result.length !== 0) {
+              toast({
+                title: "Trip created with LakbAI",
+                description:
+                  "LakbAI jump-started your trip for you, you can now modify it as necessary.",
+                variant: "default",
+              });
+            }
+          } catch (error) {
+            toast({
+              title: "Uh oh! Something went wrong.",
+              description:
+                "LakbAI trip generation is currently inactive. Trip created with incomplete details.",
+              variant: "default",
+            });
+          }
+        } else {
           toast({
             title: "Success!",
             description: "Itinerary added successfully!",
             variant: "default",
           });
-          resetValues();
         }
-        return itinerary;
-      } else {
-        throw new Error("There has been an error getting a token from Clerk.");
       }
+      setIsAddingLakbaiTrip(false);
+      setIsAddingTrip(false);
+      resetValues();
+      return itinerary;
     } else {
+      setIsAddingLakbaiTrip(false);
+      setIsAddingTrip(false);
       toast({
         title: "Form Incomplete ",
         description: "Please fill in all required fields before submitting.",
@@ -182,6 +233,8 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
         addTrip,
         itineraryDetails,
         setItineraryDetails,
+        isAddingTrip,
+        isAddingLakbaiTrip,
 
         editTripData,
         setEditTripData,

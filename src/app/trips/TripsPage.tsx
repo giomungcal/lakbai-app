@@ -1,9 +1,7 @@
 "use client";
 
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
-import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -18,42 +16,12 @@ import {
   Drawer,
   DrawerClose,
   DrawerContent,
-  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
-  DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import { supabaseClient } from "@/utils/supabase/supabaseClient";
 import { getItineraries } from "@/utils/supabase/supabaseRequests";
-import {
-  EMOJIS,
-  EmojiValue,
-  NUMBER_OF_PEOPLE,
-  NumberOfPeopleValue,
-} from "@/validators/options";
-import { useAuth } from "@clerk/nextjs";
-import { Label } from "@radix-ui/react-label";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 import { useMediaQuery } from "usehooks-ts";
 import { Database } from "../../../database.types";
 import { useTripsContext } from "../_context/AppContext";
@@ -69,13 +37,13 @@ type TripsProps = Database["public"]["Tables"]["itineraries"]["Row"];
 
 const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const { getToken } = useAuth();
 
   const [trips, setTrips] = useState<TripsProps[]>([]);
   const [openAddTrip, setOpenAddTrip] = useState<boolean>(false);
   const [isTripsLoading, setIsTripsLoading] = useState<boolean>(true);
 
-  const { addTrip } = useTripsContext();
+  const { addTrip, getToken, isAddingTrip, isAddingLakbaiTrip } =
+    useTripsContext();
 
   // Supabase Realtime
   // useEffect(() => {
@@ -170,6 +138,27 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
           </p>
         </div>
         <div className="space-x-2">
+          {/* LakbAI Submitting Loading Screen */}
+          {isAddingLakbaiTrip && (
+            <section
+              className="fixed inset-0 bg-slate-800/30 backdrop-blur-sm flex justify-center items-center"
+              style={{ zIndex: 99 }}
+            >
+              <div className="p-10 space-x-6 rounded-2xl bg-white flex justify-center items-center">
+                <span className="text-5xl animate-spin">🐸</span>
+                <div className="space-y-1">
+                  <h3 className="text-xl font-semibold">
+                    LakbAI is crafting your next adventure..
+                  </h3>
+                  <p className="text-xs text-foreground/70 font-semibold">
+                    Note: This should not take longer than 20 seconds.
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Add Trip Form */}
           {isDesktop ? (
             <Dialog open={openAddTrip} onOpenChange={setOpenAddTrip}>
               <DialogTrigger asChild>
@@ -189,9 +178,13 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                 <AddTripForm className="p-4" />
                 <DialogFooter className="pt-2">
                   <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
+                    <Button disabled={isAddingTrip} variant="outline">
+                      Cancel
+                    </Button>
                   </DialogClose>
-                  <Button onClick={handleTripSave}>Save</Button>
+                  <Button disabled={isAddingTrip} onClick={handleTripSave}>
+                    Save
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -207,9 +200,13 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
                 <AddTripForm className="p-6" />
                 <DrawerFooter className="pt-2">
                   <DrawerClose asChild>
-                    <Button variant="outline">Cancel</Button>
+                    <Button disabled={isAddingTrip} variant="outline">
+                      Cancel
+                    </Button>
                   </DrawerClose>
-                  <Button onClick={handleTripSave}>Save</Button>
+                  <Button disabled={isAddingTrip} onClick={handleTripSave}>
+                    {isAddingTrip ? "Saving.." : "Save"}
+                  </Button>
                 </DrawerFooter>
               </DrawerContent>
             </Drawer>
