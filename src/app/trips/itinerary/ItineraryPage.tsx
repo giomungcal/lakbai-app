@@ -145,6 +145,7 @@ const ItineraryPage: FC<FetchTripData> = ({
   }, [itineraryDetails]);
 
   const emojiObject = EMOJIS.find((i) => i.value === itineraryDetails?.emoji);
+  const capitalizedRole = userRole.charAt(0).toUpperCase() + userRole.slice(1);
 
   // Set selectedDay based on URL on mount
   useEffect(() => {
@@ -423,7 +424,7 @@ const ItineraryPage: FC<FetchTripData> = ({
       <div className="list-inside list-decimal text-sm text-center sm:text-left">
         {/* Title Section */}
         <section className="flex flex-row space-y-4 justify-between w-full mb-14">
-          <div className="flex flex-col space-y-4">
+          <div className="flex flex-col space-y-3">
             <div className="flex flex-col md:flex-row text-5xl md:text-6xl font-bold text-left space-y-4 md:space-y-0 mr-4">
               <h1 className="text-title dark:text-title-foreground text">
                 {itineraryDetails?.name ?? "Gio's Crazy Party"}
@@ -434,12 +435,17 @@ const ItineraryPage: FC<FetchTripData> = ({
             {/* Trip Details */}
             <div className="flex flex-row flex-wrap gap-2 text-base">
               <Badge
+                variant="default"
+                className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap"
+              >
+                🐱‍👤 Role: {capitalizedRole}
+              </Badge>
+              <Badge
                 variant="outline"
                 className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap"
               >
                 📍 {itineraryDetails?.address ?? "Brat House 👽"}
               </Badge>
-
               <Badge variant="outline">
                 {numOfPeople?.display.split("(")[0] ?? "👹 69 Bachelors"}
               </Badge>
@@ -748,22 +754,30 @@ const ItineraryPage: FC<FetchTripData> = ({
 
         {/* Itinerary Section */}
         <section className="flex flex-col space-y-10 mt-8 w-full">
-          <div className="flex flex-col sm:flex-row space-y-2 justify-between">
+          <div className="flex flex-col sm:flex-row space-y-3 justify-between">
             <div className="space-y-2 text-left">
               <h1 className="text-4xl font-bold">Itinerary</h1>
-              <p className="text-sm opacity-80">
+              <p className="text-sm opacity-80 pb-0.5">
                 Overview of your trip to {itineraryDetails?.address}
               </p>
+              {itineraryDetails?.is_created_by_lakbai && (
+                <Badge variant="default">🐸 Created with LakbAI</Badge>
+              )}
             </div>
 
             {/* Selecting/Adding Day in Itenerary */}
             <div className="flex flex-col space-y-1">
-              <p className="opacity-80 hidden md:block">Select day to view</p>
+              <Label
+                htmlFor="selectDay"
+                className="opacity-80 hidden md:block select-none"
+              >
+                Select day to view
+              </Label>
               <Select
                 value={selectedDay || undefined}
                 onValueChange={(value) => setSelectedDay(value)}
               >
-                <SelectTrigger className="w-full md:w-[150px]">
+                <SelectTrigger id="selectDay" className="w-full md:w-[150px]">
                   <SelectValue
                     placeholder={
                       userRole === "edit" || userRole === "owner"
