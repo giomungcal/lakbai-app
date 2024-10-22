@@ -21,7 +21,8 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { getItineraries } from "@/utils/supabase/supabaseRequests";
-import { useEffect, useState } from "react";
+import { formatDistanceToNow, isAfter, isBefore } from "date-fns";
+import { useEffect, useMemo, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Database } from "../../../database.types";
 import { useTripsContext } from "../_context/AppContext";
@@ -105,6 +106,30 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
     setIsTripsLoading(true);
     syncTripsWithDatabase();
   }, []);
+
+  const sortedTrips = useMemo(() => {
+    const tempTrips = [...trips];
+    tempTrips.sort((a, b) => {
+      return (
+        new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+      );
+    });
+
+    const completedTrips: TripsProps[] = [];
+
+    const sortedTrips = tempTrips.filter((t) => {
+      const tripIsDone = isBefore(t.start_date, new Date());
+      if (tripIsDone) {
+        completedTrips.push(t);
+        return false;
+      }
+      return true;
+    });
+
+    sortedTrips.push(...completedTrips);
+
+    return sortedTrips;
+  }, [trips]);
 
   async function handleTripSave() {
     const result = await addTrip();
@@ -233,7 +258,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
         </div>
       ) : (
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full gap-4 ">
-          {trips.map((trip, index) => {
+          {sortedTrips.map((trip, index) => {
             return <TripCard key={index} tripDetails={trip} />;
           })}
         </section>

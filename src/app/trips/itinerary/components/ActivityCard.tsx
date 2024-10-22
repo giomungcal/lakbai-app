@@ -162,12 +162,12 @@ const ActivityCard = ({
       <div className=" flex-grow text-left space-y-1 pr-6">
         <p className="text-sm text-muted-foreground font-semibold">{time}</p>
         <h2 className="text-title text-xl font-extrabold">{name}</h2>
-        <p className="text-xs text-muted-foreground font-medium line-clamp-2">
+        <p className="text-xs text-muted-foreground font-semibold line-clamp-1">
           {address}
         </p>
-        {/* <p className="text-sm text-card-foreground line-clamp-2">
+        <p className="text-sm text-muted-foreground font-medium line-clamp-1">
           {description}
-        </p> */}
+        </p>
       </div>
 
       {/* View Details Button (whole card) */}
