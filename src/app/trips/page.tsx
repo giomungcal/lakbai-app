@@ -3,7 +3,6 @@
 import ErrorPage from "@/components/ErrorPage";
 import { getItineraries } from "@/utils/supabase/supabaseRequests";
 import { auth } from "@clerk/nextjs/server";
-import { notFound } from "next/navigation";
 import { Database } from "../../../database.types";
 import TripsPage from "./TripsPage";
 

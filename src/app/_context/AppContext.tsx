@@ -24,7 +24,6 @@ import {
   SetStateAction,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -213,6 +212,7 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
                 "LakbAI trip generation is currently inactive. Trip created with incomplete details.",
               variant: "default",
             });
+            console.error("Something went wrong: ", error);
           }
         } else {
           toast({

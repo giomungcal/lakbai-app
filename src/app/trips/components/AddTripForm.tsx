@@ -41,7 +41,6 @@ export const AddTripForm = ({ className }: { className: string }) => {
     endDate,
 
     isAddingTrip,
-    isAddingLakbaiTrip,
 
     itineraryDetails,
     setItineraryDetails,

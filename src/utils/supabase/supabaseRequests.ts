@@ -354,7 +354,7 @@ export const updateDay = async ({
     }
     return data as ItineraryType;
   } else if (action === "delete") {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("itineraries")
       .update({ days_count: day })
       .eq("id", itineraryId)
@@ -380,7 +380,7 @@ export const updateDay = async ({
           .map((a) => a.id)
       : [];
 
-    const { data: activitiesDeleted, error: activitiesError } = await supabase
+    const { data: activitiesDeleted } = await supabase
       .from("activities")
       .delete()
       .in("id", idsToDeleteArray)

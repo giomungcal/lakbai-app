@@ -147,6 +147,28 @@ const ItineraryPage: FC<FetchTripData> = ({
   const emojiObject = EMOJIS.find((i) => i.value === itineraryDetails?.emoji);
   const capitalizedRole = userRole.charAt(0).toUpperCase() + userRole.slice(1);
 
+  const syncActivitiesWithDb = async () => {
+    const token = await getToken({ template: "lakbai-supabase" });
+    const result = await getSpecificActivity({
+      token,
+      itineraryId: itineraryDetails?.id,
+    });
+    if (result) {
+      setTripActivities(result);
+    }
+  };
+
+  const syncTripsWithDb = async () => {
+    const token = await getToken({ template: "lakbai-supabase" });
+    const result = await getSpecificItinerary({
+      token,
+      itineraryId: itineraryDetails?.id,
+    });
+    if (result) {
+      setItineraryDetails(result[0]);
+    }
+  };
+
   // Set selectedDay based on URL on mount
   useEffect(() => {
     const dayParam = searchParams.get("day");
@@ -163,7 +185,7 @@ const ItineraryPage: FC<FetchTripData> = ({
 
     syncActivitiesWithDb();
     syncTripsWithDb();
-  }, []);
+  }, [syncActivitiesWithDb]);
 
   // Set URL & filter activities on state change
   useEffect(() => {
@@ -197,29 +219,7 @@ const ItineraryPage: FC<FetchTripData> = ({
 
   useEffect(() => {
     syncActivitiesWithDb();
-  }, [requestComplete]);
-
-  const syncActivitiesWithDb = async () => {
-    const token = await getToken({ template: "lakbai-supabase" });
-    const result = await getSpecificActivity({
-      token,
-      itineraryId: itineraryDetails?.id,
-    });
-    if (result) {
-      setTripActivities(result);
-    }
-  };
-
-  const syncTripsWithDb = async () => {
-    const token = await getToken({ template: "lakbai-supabase" });
-    const result = await getSpecificItinerary({
-      token,
-      itineraryId: itineraryDetails?.id,
-    });
-    if (result) {
-      setItineraryDetails(result[0]);
-    }
-  };
+  }, [requestComplete, syncActivitiesWithDb]);
 
   const handleAddDay = async () => {
     if (itineraryDetails!.days_count >= MAX_DAYS) {

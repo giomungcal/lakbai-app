@@ -43,7 +43,6 @@ import {
 import { Loader } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Database } from "../../../../../database.types";
-import { getFullNameByUserId } from "../actions";
 
 type Users = Database["public"]["Tables"]["user_roles"]["Row"];
 
@@ -305,7 +304,7 @@ const CollaborationDialog = ({
           <div className="space-y-1">
             <Label className="font-semibold text-base">Add Collaborator</Label>
             <p className="text-card-foreground/80 text-xs">
-              Enter the email of the person you'd like to add.
+              Enter the email of the person you&apos;d like to add.
             </p>
           </div>
           <Button

@@ -1,10 +1,13 @@
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { EMOJIS, NUMBER_OF_PEOPLE } from "@/validators/options";
 import { format } from "date-fns";
 import Link from "next/link";
+import { Database } from "../../../../database.types";
 
-const TripCard = ({ tripDetails }) => {
+type TripDetails = Database["public"]["Tables"]["itineraries"]["Row"];
+
+const TripCard = ({ tripDetails }: { tripDetails: TripDetails }) => {
   const {
     id,
     emoji,

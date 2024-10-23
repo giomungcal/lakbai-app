@@ -21,7 +21,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { getItineraries } from "@/utils/supabase/supabaseRequests";
-import { formatDistanceToNow, isAfter, isBefore } from "date-fns";
+import { isBefore } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { Database } from "../../../database.types";
@@ -40,7 +40,7 @@ type TripsProps = Database["public"]["Tables"]["itineraries"]["Row"];
 const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
-  const [trips, setTrips] = useState<TripsProps[]>([]);
+  const [trips, setTrips] = useState<TripsProps[]>(serverTrips || []);
   const [openAddTrip, setOpenAddTrip] = useState<boolean>(false);
   const [isTripsLoading, setIsTripsLoading] = useState<boolean>(true);
 
@@ -106,7 +106,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   useEffect(() => {
     setIsTripsLoading(true);
     syncTripsWithDatabase();
-  }, []);
+  }, [syncTripsWithDatabase]);
 
   const sortedTrips = useMemo(() => {
     const tempTrips = [...trips];

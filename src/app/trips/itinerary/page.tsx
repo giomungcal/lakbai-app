@@ -28,7 +28,7 @@ const Page = async ({ searchParams }: PageProps) => {
   const { id: itineraryId } = searchParams;
   const { userId, getToken } = auth();
 
-  async function fetchTripData(): Promise<FetchTripData | undefined> {
+  async function fetchTripData(): Promise<FetchTripData> {
     if (!userId) {
       const itinerary = await getSpecificItinerary({ itineraryId });
       const activities = await getSpecificActivity({ itineraryId });
@@ -84,7 +84,11 @@ const Page = async ({ searchParams }: PageProps) => {
         };
       } catch (error) {
         console.error(error);
-        return;
+        return {
+          itinerary: null,
+          activities: null,
+          userRole: "none",
+        };
       }
     }
   }
