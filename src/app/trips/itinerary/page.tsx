@@ -28,7 +28,7 @@ const Page = async ({ searchParams }: PageProps) => {
   const { id: itineraryId } = searchParams;
   const { userId, getToken } = auth();
 
-  async function fetchTripData(): Promise<FetchTripData> {
+  async function fetchTripData(): Promise<FetchTripData | undefined> {
     if (!userId) {
       const itinerary = await getSpecificItinerary({ itineraryId });
       const activities = await getSpecificActivity({ itineraryId });
@@ -39,48 +39,53 @@ const Page = async ({ searchParams }: PageProps) => {
         userRole: "public",
       };
     } else {
-      const token = await getToken({ template: "lakbai-supabase" });
+      try {
+        const token = await getToken({ template: "lakbai-supabase" });
 
-      const itinerary = await getSpecificItinerary({ itineraryId, token });
-      const activities = await getSpecificActivity({ itineraryId, token });
+        const itinerary = await getSpecificItinerary({ itineraryId, token });
+        const activities = await getSpecificActivity({ itineraryId, token });
 
-      // Identify the User Role: owner, viewer, editor, anonymous
-      let userRole: UserRole = "none";
+        // Identify the User Role: owner, viewer, editor, anonymous
+        let userRole: UserRole = "none";
 
-      if (itinerary) {
-        const isOwner = itinerary.some((i) => i.owner_id === userId);
-        const isPublic = itinerary.some((i) => i.is_public === true);
+        if (itinerary) {
+          const isOwner = itinerary.some((i) => i.owner_id === userId);
+          const isPublic = itinerary.some((i) => i.is_public === true);
 
-        if (isOwner) {
-          userRole = "owner";
-        } else {
-          if (isPublic) {
-            userRole = "public";
-          }
+          if (isOwner) {
+            userRole = "owner";
+          } else {
+            if (isPublic) {
+              userRole = "public";
+            }
 
-          const userRoles = await getUserRoles({
-            userId,
-            token,
-          });
-          if (userRoles) {
-            const roleForThisItinerary = userRoles.map(
-              (i) => i.itinerary_id === itineraryId && i.role
-            );
-            // Sets userRole to edit in any chance that user has both view and edit in the same itinerary
-            if (roleForThisItinerary.some((i) => i === "edit")) {
-              userRole = "edit";
-            } else if (roleForThisItinerary.some((i) => i === "view")) {
-              userRole = "view";
+            const userRoles = await getUserRoles({
+              userId,
+              token,
+            });
+            if (userRoles) {
+              const roleForThisItinerary = userRoles.map(
+                (i) => i.itinerary_id === itineraryId && i.role
+              );
+              // Sets userRole to edit in any chance that user has both view and edit in the same itinerary
+              if (roleForThisItinerary.some((i) => i === "edit")) {
+                userRole = "edit";
+              } else if (roleForThisItinerary.some((i) => i === "view")) {
+                userRole = "view";
+              }
             }
           }
         }
-      }
 
-      return {
-        itinerary: itinerary ?? null,
-        activities: activities ?? null,
-        userRole,
-      };
+        return {
+          itinerary: itinerary ?? null,
+          activities: activities ?? null,
+          userRole,
+        };
+      } catch (error) {
+        console.error(error);
+        return;
+      }
     }
   }
 
