@@ -100,6 +100,15 @@ export const AddTripForm = ({ className }: { className: string }) => {
                 setItineraryDetails((prev) => {
                   return { ...prev, address: value!.label };
                 }),
+              styles: {
+                input: (provided) => ({
+                  ...provided,
+                }),
+                option: (provided) => ({
+                  ...provided,
+                  color: "black",
+                }),
+              },
             }}
           />
         </div>
@@ -208,10 +217,12 @@ export const AddTripForm = ({ className }: { className: string }) => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex flex-row items-center justify-between bg-accent/50 border rounded-lg p-3">
+              <div className="flex flex-row items-center justify-between bg-accent/50 border dark:text-background rounded-lg p-3">
                 <div className="space-y-0.5 p-1">
-                  <Label>Generate Trip with LakbAI 🐸</Label>
-                  <p className="text-card-foreground/80 text-xs">
+                  <Label className="font-semibold">
+                    Generate Trip with LakbAI 🐸
+                  </Label>
+                  <p className="text-xs">
                     Let LakbAI create the whole trip for you.
                   </p>
                 </div>

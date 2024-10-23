@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}>
+      <body className={`dark ${inter.className} antialiased transition-colors`}>
         <ClerkProvider>
           <TripsContextProvider>
             <ActivitiesContextProvider>

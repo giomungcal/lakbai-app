@@ -187,7 +187,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
           {isDesktop ? (
             <Dialog open={openAddTrip} onOpenChange={setOpenAddTrip}>
               <DialogTrigger asChild>
-                <Button className="font-xl dark:bg-white" size="lg">
+                <Button className="font-xl " size="lg">
                   + New Trip
                 </Button>
               </DialogTrigger>

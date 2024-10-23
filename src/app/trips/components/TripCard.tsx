@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { EMOJIS, NUMBER_OF_PEOPLE } from "@/validators/options";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -22,7 +22,7 @@ const TripCard = ({ tripDetails }) => {
   const emojiObject = EMOJIS.find((i) => i.value === emoji);
 
   return (
-    <div className="relative flex flex-col justify-between h-52 bg-secondary/30 border-border border-2 rounded-2xl p-5 hover:bg-secondary/50 transition-all">
+    <div className="relative flex flex-col justify-between h-52 bg-secondary/30 hover:bg-secondary/50  border rounded-2xl p-5  transition-all">
       <Link
         className="absolute inset-0 z-10"
         href={`/trips/itinerary?id=${id}`}
@@ -48,16 +48,11 @@ const TripCard = ({ tripDetails }) => {
         <p className="text-xs truncate font-semibold text-muted-foreground">
           📆 {dateStartFormatted} to {dateEndFormatted}
         </p>
-        <Link
-          href={`/trips/itinerary?id=${id}`}
-          className={buttonVariants({
-            size: "lg",
-            variant: "secondary",
-          })}
-          style={{ zIndex: "20" }}
-        >
-          Open Itinerary
-        </Link>
+        <Button variant="secondary" size="lg" asChild>
+          <Link href={`/trips/itinerary?id=${id}`} style={{ zIndex: "20" }}>
+            Open Itinerary
+          </Link>
+        </Button>
       </div>
     </div>
   );

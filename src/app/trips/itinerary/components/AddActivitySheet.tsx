@@ -200,7 +200,7 @@ const AddActivitySheet = ({
             />
           </div>
           {isFormComplete === false && (
-            <div className="flex text-xs items-center justify-center text-left space-x-2 p-2 rounded-md border-destructive/40 border-2 border-dashed bg-red-200/80 ">
+            <div className="flex text-xs items-center justify-center text-left space-x-2 p-2 rounded-md border-destructive/40 border-2 border-dashed bg-red-200/80 dark:bg-[#500202cc]">
               <div className="flex items-center text-left space-x-2">
                 <TriangleAlert
                   width={12}

@@ -750,7 +750,7 @@ const ItineraryPage: FC<FetchTripData> = ({
         )}
 
         {/* Horizontal Separator */}
-        <div className="h-px w-full bg-slate-200"></div>
+        <div className="h-px w-full bg-border"></div>
 
         {/* Itinerary Section */}
         <section className="flex flex-col space-y-10 mt-8 w-full">
@@ -844,7 +844,7 @@ const ItineraryPage: FC<FetchTripData> = ({
             </div>
           </div>
 
-          <div className="h-px w-full bg-slate-200"></div>
+          <div className="h-px w-full bg-border"></div>
 
           {/* Activities Display Section  */}
 
