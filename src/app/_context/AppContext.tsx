@@ -109,9 +109,7 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
     const localTheme = localStorage.getItem("theme");
     if (localTheme) {
       const dark_deserialized = JSON.parse(localTheme);
-      console.log(dark_deserialized);
       if (dark_deserialized === "true") {
-        console.log("Dark Mode True in local storage");
         setDarkMode(true);
       } else {
         setDarkMode(false);

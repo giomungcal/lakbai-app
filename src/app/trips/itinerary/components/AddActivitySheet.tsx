@@ -112,6 +112,12 @@ const AddActivitySheet = ({
                       ...prev,
                       address: value!.label,
                     })),
+                  styles: {
+                    option: (provided) => ({
+                      ...provided,
+                      color: "black",
+                    }),
+                  },
                 }}
               />
             </div>

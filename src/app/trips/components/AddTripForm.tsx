@@ -100,9 +100,6 @@ export const AddTripForm = ({ className }: { className: string }) => {
                   return { ...prev, address: value!.label };
                 }),
               styles: {
-                input: (provided) => ({
-                  ...provided,
-                }),
                 option: (provided) => ({
                   ...provided,
                   color: "black",
