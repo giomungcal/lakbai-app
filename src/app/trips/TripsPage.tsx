@@ -40,7 +40,7 @@ type TripsProps = Database["public"]["Tables"]["itineraries"]["Row"];
 const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
-  const [trips, setTrips] = useState<TripsProps[]>(serverTrips || []);
+  const [trips, setTrips] = useState<TripsProps[]>([]);
   const [openAddTrip, setOpenAddTrip] = useState<boolean>(false);
   const [isTripsLoading, setIsTripsLoading] = useState<boolean>(true);
 
@@ -106,7 +106,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   useEffect(() => {
     setIsTripsLoading(true);
     syncTripsWithDatabase();
-  }, [syncTripsWithDatabase]);
+  }, []);
 
   const sortedTrips = useMemo(() => {
     const tempTrips = [...trips];
@@ -171,9 +171,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
           {isDesktop ? (
             <Dialog open={openAddTrip} onOpenChange={setOpenAddTrip}>
               <DialogTrigger asChild>
-                <Button variant="default" size="lg">
-                  + New Trip
-                </Button>
+                <Button size="lg">+ New Trip</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -200,9 +198,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
           ) : (
             <Drawer open={openAddTrip} onOpenChange={setOpenAddTrip}>
               <DrawerTrigger asChild>
-                <Button className="font-xl dark:bg-white" size="lg">
-                  + New Trip
-                </Button>
+                <Button size="lg">+ New Trip</Button>
               </DrawerTrigger>
               <DrawerContent>
                 <DrawerHeader className="text-left"></DrawerHeader>
