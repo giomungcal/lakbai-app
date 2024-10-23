@@ -231,6 +231,7 @@ const CollaborationDialog = ({
                   <div className="flex space-x-3 items-center">
                     <div className="size-9 object-cover">
                       <img
+                        alt="Collaborator Image"
                         src={user.image_url}
                         className="w-full h-full rounded-full"
                       />

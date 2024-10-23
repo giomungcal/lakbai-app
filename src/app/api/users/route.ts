@@ -1,9 +1,22 @@
 import axios from "axios";
 import { NextResponse } from "next/server";
+import { Database } from "../../../../database.types";
+
+interface ClerkUsers {
+  email_addresses: ClerkEmail[];
+  id: string;
+  first_name: string;
+  last_name: string;
+  image_url: string;
+}
+
+interface ClerkEmail {
+  email_address: string;
+}
 
 export async function GET() {
   try {
-    const { data } = await axios.get(
+    const { data } = await axios.get<ClerkUsers[]>(
       "https://api.clerk.dev/v1/users?limit=10&offset=0&order_by=-created_at",
       {
         headers: {

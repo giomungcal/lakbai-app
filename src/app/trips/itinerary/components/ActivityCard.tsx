@@ -53,6 +53,7 @@ import { EllipsisVertical, Loader, Map, SquarePen, Trash } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
+import { Database } from "../../../../../database.types";
 
 type Activities = Database["public"]["Tables"]["activities"]["Row"];
 
