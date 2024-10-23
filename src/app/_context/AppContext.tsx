@@ -24,6 +24,8 @@ import {
   SetStateAction,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
 } from "react";
 import { Database } from "../../../database.types";
@@ -46,6 +48,8 @@ interface GetTokenOptions {
 interface TripsContext {
   userId: string | null | undefined;
   getToken: (options?: GetTokenOptions) => Promise<string | null>;
+  darkMode: boolean;
+  setDarkMode: Dispatch<SetStateAction<boolean>>;
 
   startDate: Date;
   setStartDate: Dispatch<SetStateAction<Date>>;
@@ -99,10 +103,35 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
 
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+  const hasMounted = useRef(false);
 
-  // useEffect(() => {
-  //   console.log(itineraryDetails);
-  // }, [itineraryDetails]);
+  useEffect(() => {
+    const localTheme = localStorage.getItem("theme");
+    if (localTheme) {
+      const dark_deserialized = JSON.parse(localTheme);
+      console.log(dark_deserialized);
+      if (dark_deserialized === "true") {
+        console.log("Dark Mode True in local storage");
+        setDarkMode(true);
+      } else {
+        setDarkMode(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (hasMounted.current) {
+      const dark_serialized = JSON.stringify(darkMode);
+      if (darkMode) {
+        document.body.classList.add("dark");
+      } else {
+        document.body.classList.remove("dark");
+      }
+      localStorage.setItem("theme", JSON.stringify(dark_serialized));
+    }
+    hasMounted.current = true;
+  }, [darkMode]);
 
   function validationForm() {
     const { name, address, emoji, start_date, end_date, num_of_people } =
@@ -163,8 +192,8 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
       });
 
       if (itinerary) {
+        // LakbAI / Gemini AI Trip Generation algorithm
         if (itineraryDetails.is_created_by_lakbai === true) {
-          // Put Gemini AI codebase here!!
           try {
             const geminiActivityArray = await geminiItineraryRun(itinerary[0]);
             const result = await addActivity({ token, geminiActivityArray });
@@ -224,6 +253,8 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
       value={{
         userId,
         getToken,
+        darkMode,
+        setDarkMode,
 
         startDate,
         setStartDate,

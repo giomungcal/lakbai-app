@@ -27,6 +27,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { Database } from "../../../database.types";
 import { useTripsContext } from "../_context/AppContext";
 import { AddTripForm } from "./components/AddTripForm";
+import LakbAILoader from "./components/LakbAILoader";
 import TripCard from "./components/TripCard";
 
 interface TripsPage {
@@ -151,7 +152,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   }
 
   return (
-    <MaxWidthWrapper className="flex w-full flex-col md:py-20">
+    <MaxWidthWrapper className="flex w-full flex-col py-8 md:py-20">
       {/* Title Section */}
       <section className="flex flex-col lg:flex-row space-y-4 justify-between w-full my-14 md:mb-14 md:my-0">
         <div className="space-y-2">
@@ -164,30 +165,13 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
         </div>
         <div className="space-x-2">
           {/* LakbAI Submitting Loading Screen */}
-          {isAddingLakbaiTrip && (
-            <section
-              className="fixed inset-0 bg-slate-800/30 backdrop-blur-sm flex justify-center items-center"
-              style={{ zIndex: 99 }}
-            >
-              <div className="p-10 space-x-6 rounded-2xl bg-white flex justify-center items-center">
-                <span className="text-5xl animate-spin">🐸</span>
-                <div className="space-y-1">
-                  <h3 className="text-xl font-semibold">
-                    LakbAI is crafting your next adventure..
-                  </h3>
-                  <p className="text-xs text-foreground/70 font-semibold">
-                    Note: This should not take longer than 20 seconds.
-                  </p>
-                </div>
-              </div>
-            </section>
-          )}
+          {isAddingLakbaiTrip && <LakbAILoader />}
 
           {/* Add Trip Form */}
           {isDesktop ? (
             <Dialog open={openAddTrip} onOpenChange={setOpenAddTrip}>
               <DialogTrigger asChild>
-                <Button className="font-xl " size="lg">
+                <Button variant="default" size="lg">
                   + New Trip
                 </Button>
               </DialogTrigger>

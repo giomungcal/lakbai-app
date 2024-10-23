@@ -17,7 +17,7 @@ const Navbar = () => {
   const isTripsPage = path === "/trips";
 
   return (
-    <header className=" h-14 z-[100] inset-x-0 top-0 w-full border dark:bg-[#191C16] backdrop-blur-lg transition-all">
+    <header className="sticky h-14 z-40 inset-x-0 top-0 w-full border border-t-0 border-x-0 backdrop-blur-md transition-all">
       <MaxWidthWrapper>
         <nav className="h-14 flex justify-between items-center">
           <div>

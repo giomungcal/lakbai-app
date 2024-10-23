@@ -1,3 +1,4 @@
+import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/toaster";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -24,13 +25,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`dark ${inter.className} antialiased transition-colors`}>
+      <body className={`${inter.className} antialiased`}>
         <ClerkProvider>
           <TripsContextProvider>
             <ActivitiesContextProvider>
               <Navbar />
               <main className="min-h-[calc(100vh-3.5rem)]">{children}</main>
               <Toaster />
+              <Footer />
             </ActivitiesContextProvider>
           </TripsContextProvider>
         </ClerkProvider>

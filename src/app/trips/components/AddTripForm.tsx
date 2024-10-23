@@ -217,7 +217,7 @@ export const AddTripForm = ({ className }: { className: string }) => {
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex flex-row items-center justify-between bg-accent/50 border dark:text-background rounded-lg p-3">
+              <div className="flex flex-row items-center justify-between bg-accent/50 border rounded-lg p-3">
                 <div className="space-y-0.5 p-1">
                   <Label className="font-semibold">
                     Generate Trip with LakbAI 🐸
