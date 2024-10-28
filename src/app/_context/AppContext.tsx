@@ -122,8 +122,10 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
       const dark_serialized = JSON.stringify(darkMode);
       if (darkMode) {
         document.body.classList.add("dark");
+        document.body.classList.remove("grainy-light");
       } else {
         document.body.classList.remove("dark");
+        document.body.classList.add("grainy-light");
       }
       localStorage.setItem("theme", JSON.stringify(dark_serialized));
     }

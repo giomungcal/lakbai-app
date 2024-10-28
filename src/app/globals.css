@@ -30,7 +30,6 @@ body {
 
 @layer base {
   @layer base {
-    /* ORIGINAL ROOT */
     :root {
       --title: 75, 89%, 21%;
       --background: 74 56% 98%;

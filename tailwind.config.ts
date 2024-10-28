@@ -9,6 +9,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        ZT: "ZT",
+        ZTBold: "ZTBold",
+      },
       colors: {
         title: "hsl(var(--title))",
         background: "hsl(var(--background))",
