@@ -920,11 +920,9 @@ const ItineraryPage: FC<FetchTripData> = ({
 
           {itineraryDetails!.days_count === 0 ||
             (selectedDay && selectedDay !== "0" && (
-              <section className="flex flex-col space-y-6 p-8 bg-accent/70 rounded-2xl shadow-md">
-                <div className="flex justify-between">
-                  <h3 className="text-2xl sm:text-3xl font-bold">
-                    Day {selectedDay}
-                  </h3>
+              <section className="flex flex-col space-y-6 p-6 md:p-8 bg-accent/70 rounded-2xl shadow-md">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-3xl font-bold">Day {selectedDay}</h3>
                   {(userRole === "owner" || userRole === "edit") && (
                     <div className="flex space-x-2">
                       <Button
