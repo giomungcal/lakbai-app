@@ -1,3 +1,4 @@
+import { SignedOut, SignInButton } from "@clerk/nextjs";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import MaxWidthWrapper from "./MaxWidthWrapper";
@@ -12,11 +13,18 @@ const ErrorPage = () => {
         <p className="text-muted-foreground text-sm font-semibold">
           We cannot find the page you were looking for.
         </p>
-        <Button variant="outline" asChild>
-          <Link href="/">
-            <ArrowLeft width={21} height={21} className="mr-1" /> Go Home
-          </Link>
-        </Button>
+        <div className="flex space-x-2">
+          <SignedOut>
+            <SignInButton forceRedirectUrl={"/trips"}>
+              <Button variant="default">Sign In</Button>
+            </SignInButton>
+          </SignedOut>
+          <Button variant="outline" asChild>
+            <Link href="/">
+              <ArrowLeft width={21} height={21} className="mr-1" /> Go Home
+            </Link>
+          </Button>
+        </div>
       </div>
     </MaxWidthWrapper>
   );

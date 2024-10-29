@@ -20,14 +20,14 @@ const Navbar = () => {
     <header className="sticky h-14 z-40 inset-x-0 top-0 w-full border border-t-0 border-x-0 backdrop-blur-md transition-all">
       <MaxWidthWrapper>
         <nav className="h-14 flex justify-between items-center">
-          <div>
-            <Link href="/" className="font-bold text-title">
+          <div className="h-full flex items-center">
+            <Link href="/" className="font-bold text-title py-3 pr-3">
               🐸 LakbAI
             </Link>
           </div>
           <div className="space-x-2">
             <SignedOut>
-              <SignInButton>
+              <SignInButton forceRedirectUrl={"/trips"}>
                 <Button>Sign In</Button>
               </SignInButton>
             </SignedOut>
