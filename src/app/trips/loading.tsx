@@ -15,7 +15,7 @@ const loading = () => {
         </div>
         <div></div>
       </section>
-      <div className="animate-pulse flex flex-col justify-between w-[35%] h-52 bg-secondary/30 rounded-2xl p-5">
+      <div className="animate-pulse flex flex-col justify-between max-w-[330px] h-52 bg-secondary/30 rounded-2xl p-5">
         <div></div>
         <div className="w-full h-12 rounded-lg bg-secondary/60" />
       </div>
