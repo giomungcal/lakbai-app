@@ -106,7 +106,13 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
   const hasMounted = useRef(false);
 
   useEffect(() => {
+    const isDarkMode = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
     const localTheme = localStorage.getItem("theme");
+    if (isDarkMode && !localTheme) {
+      setDarkMode(true);
+    }
     if (localTheme) {
       const dark_deserialized = JSON.parse(localTheme);
       if (dark_deserialized === "true") {
