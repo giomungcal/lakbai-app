@@ -25,7 +25,7 @@ const TripCard = ({ tripDetails }: { tripDetails: TripDetails }) => {
   const emojiObject = EMOJIS.find((i) => i.value === emoji);
 
   return (
-    <div className="relative flex flex-col justify-between h-52 bg-secondary/30 hover:bg-secondary/50  border rounded-2xl p-5  transition-all">
+    <div className="relative flex flex-col justify-between h-52 bg-secondary/25 hover:bg-secondary/40  border rounded-2xl p-5  transition-all">
       <Link
         className="absolute inset-0 z-10"
         href={`/trips/itinerary?id=${id}`}

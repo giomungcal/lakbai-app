@@ -1,11 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
+import LandingButton from "@/components/LandingButton";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
-import { cn } from "@/lib/utils";
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
   return (
     <>
       <MaxWidthWrapper className="pt-24 sm:pt-44">
@@ -185,24 +185,5 @@ export default function Home() {
         </section>
       </MaxWidthWrapper>
     </>
-  );
-}
-
-function LandingButton({
-  className,
-  children,
-}: {
-  className?: string;
-  children: string;
-}) {
-  return (
-    <button
-      className={cn(
-        "dropbox-effect border-black border text-sm px-6 py-2 bg-[#FFD11B] text-black transition-all",
-        className
-      )}
-    >
-      {children}
-    </button>
   );
 }

@@ -15,7 +15,7 @@ import {
   NUMBER_OF_PEOPLE,
   PeriodType,
 } from "@/validators/options";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { formatDistance } from "date-fns";
 import {
   createContext,

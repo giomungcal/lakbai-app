@@ -169,7 +169,7 @@ const ItineraryPage: FC<FetchTripData> = ({
   useEffect(() => {
     // Set URL on state change
     if (selectedDay) {
-      window.history.pushState(
+      window.history.replaceState(
         null,
         "",
         `?id=${itineraryDetails?.id}&day=${selectedDay}`
