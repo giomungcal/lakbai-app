@@ -290,7 +290,7 @@ const CollaborationDialog = ({
                 </div>
               ))
             ) : (
-              <div className="flex items-center justify-center h-14 w-full border-2 rounded-xl border-accent border-dashed bg-slate-100">
+              <div className="flex items-center justify-center h-14 w-full border-2 rounded-xl border-accent border-dashed bg-card">
                 <span className="text-sm text-muted-foreground">
                   👻 No collaborators yet.
                 </span>

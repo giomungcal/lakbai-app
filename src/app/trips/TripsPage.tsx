@@ -47,62 +47,6 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   const { addTrip, getToken, isAddingTrip, isAddingLakbaiTrip } =
     useTripsContext();
 
-  // Supabase Realtime
-  // useEffect(() => {
-  //   const subscribeToRealtime = async () => {
-  //     const supabaseToken = await getToken({
-  //       template: "lakbai-supabase",
-  //     });
-  //     const supabase = await supabaseClient(supabaseToken);
-  //     supabase.realtime.setAuth(supabaseToken);
-
-  //     const channel = supabase
-  //       .channel("custom-all-channel")
-  //       .on(
-  //         "postgres_changes",
-  //         {
-  //           event: "DELETE",
-  //           schema: "public",
-  //           table: "itineraries",
-  //         },
-  //         (payload) => {
-  //           if (trips?.some((t) => t.id === payload.old.id)) {
-  //             toast({
-  //               title: "A trip has been deleted.",
-  //               variant: "default",
-  //             });
-  //             syncTripsWithDatabase();
-  //           }
-  //         }
-  //       )
-  //       .on(
-  //         "postgres_changes",
-  //         {
-  //           event: "UPDATE",
-  //           schema: "public",
-  //           table: "itineraries",
-  //         },
-  //         (payload) => {
-  //           if (trips?.some((t) => t.owner_id === payload.new.owner_id)) {
-  //             toast({
-  //               title: "A trip has been updated.",
-  //               description: `Trip: ${payload.new.name} has been updated.`,
-  //               variant: "default",
-  //             });
-  //             syncTripsWithDatabase();
-  //           }
-  //         }
-  //       )
-  //       .subscribe();
-
-  //     return () => {
-  //       supabase.removeChannel(channel);
-  //     };
-  //   };
-
-  //   subscribeToRealtime();
-  // }, [trips]);
-
   useEffect(() => {
     setIsTripsLoading(true);
     syncTripsWithDatabase();

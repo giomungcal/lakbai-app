@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { supabaseClient } from "@/utils/supabase/supabaseClient";
 import {
   deleteItinerary,
   getSpecificActivity,
@@ -78,6 +79,7 @@ import {
   Trash,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FC, useEffect, useMemo, useState } from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
@@ -198,6 +200,37 @@ const ItineraryPage: FC<FetchTripData> = ({
   useEffect(() => {
     syncActivitiesWithDb();
   }, [requestComplete]);
+
+  // Supabase Realtime
+  useEffect(() => {
+    const subscribeToRealtime = async () => {
+      const supabaseToken = await getToken({
+        template: "lakbai-supabase",
+      });
+      const supabase = await supabaseClient(supabaseToken);
+      supabase.realtime.setAuth(supabaseToken);
+
+      const activities = supabase
+        .channel("custom-all-channel")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "activities",
+            filter: `itinerary_id=eq.${itineraryDetails?.id}`,
+          },
+          syncActivitiesWithDb
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(activities);
+      };
+    };
+
+    subscribeToRealtime();
+  }, [activities]);
 
   const syncActivitiesWithDb = async () => {
     const token = await getToken({ template: "lakbai-supabase" });
@@ -423,8 +456,17 @@ const ItineraryPage: FC<FetchTripData> = ({
     <MaxWidthWrapper className="flex w-full flex-col py-14 md:py-20">
       <div className="list-inside list-decimal text-sm text-center sm:text-left">
         {/* Title Section */}
-        <section className="flex flex-row space-y-4 justify-between w-full mb-14">
+        <section className="flex flex-row justify-between w-full mb-14">
           <div className="flex flex-col space-y-3">
+            <div className="flex mb-4">
+              <Button
+                variant="outline"
+                className="bg-white/50 dark:bg-accent/70"
+                asChild
+              >
+                <Link href={"/trips"}>&lt;-- Back to Trips</Link>
+              </Button>
+            </div>
             <div className="flex flex-col md:flex-row text-5xl md:text-6xl font-bold text-left space-y-4 md:space-y-0 mr-4">
               <h1 className="text-title dark:text-title-foreground text">
                 {itineraryDetails?.name ?? "Gio's Crazy Party"}
@@ -449,18 +491,19 @@ const ItineraryPage: FC<FetchTripData> = ({
               <Badge variant="outline">
                 {numOfPeople?.display.split("(")[0] ?? "👹 69 Bachelors"}
               </Badge>
-              <Badge variant="outline">
+              <Badge variant="outline" className="hidden sm:block">
                 📅 {dateStartFormatted} to {dateEndFormatted}
               </Badge>
             </div>
 
             {(userRole === "edit" || userRole === "owner") && (
-              <div className="flex space-x-2 space-y-0">
+              <div className="flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
                 {userRole === "owner" && (
                   <>
                     <Button
                       variant="secondary"
                       onClick={() => setIsCollabDialogOpen(true)}
+                      className="max-w-52"
                     >
                       <Users className="mr-2 h-4 w-4" />
                       <span>Collaboration</span>
@@ -480,6 +523,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                 <Button
                   variant="default"
                   onClick={() => setIsShareDialogOpen(true)}
+                  className="max-w-52"
                 >
                   <Share className="mr-2 h-4 w-4" />
                   <span>Share Itinerary</span>
@@ -500,7 +544,7 @@ const ItineraryPage: FC<FetchTripData> = ({
             )}
           </div>
 
-          <div className="flex flex-col justify-start space-y-2">
+          <div className="flex flex-col justify-start">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="default" className="">
@@ -878,7 +922,9 @@ const ItineraryPage: FC<FetchTripData> = ({
             (selectedDay && selectedDay !== "0" && (
               <section className="flex flex-col space-y-6 p-8 bg-accent/70 rounded-2xl shadow-md">
                 <div className="flex justify-between">
-                  <h3 className="text-3xl font-bold">Day {selectedDay}</h3>
+                  <h3 className="text-2xl sm:text-3xl font-bold">
+                    Day {selectedDay}
+                  </h3>
                   {(userRole === "owner" || userRole === "edit") && (
                     <div className="flex space-x-2">
                       <Button
@@ -941,7 +987,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                         className="h-full min-h-[100px] flex items-center justify-center border-2 rounded-2xl border-dashed border-border cursor-pointer "
                         onClick={() => setIsAddActivityOpen(true)}
                       >
-                        <p className="font-medium text-base text-foreground/60">
+                        <p className="font-medium text-sm sm:text-base text-foreground/60">
                           + add activity
                         </p>
                       </Button>

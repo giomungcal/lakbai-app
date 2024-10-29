@@ -160,9 +160,13 @@ const ActivityCard = ({
       className={`relative w-full h-full flex items-center space-x-4 bg-card hover:bg-primary/50 border-accent border-2 rounded-2xl p-6 transition-all cursor-pointer`}
     >
       {/* Card Details */}
-      <div className=" flex-grow text-left space-y-1 pr-6">
-        <p className="text-sm text-muted-foreground font-semibold">{time}</p>
-        <h2 className="text-title text-xl font-extrabold">{name}</h2>
+      <div className="flex-grow text-left space-y-1 pr-6">
+        <p className="text-xs sm:text-sm text-muted-foreground font-semibold">
+          {time}
+        </p>
+        <h2 className="text-title text-base sm:text-xl font-extrabold">
+          {name}
+        </h2>
         <p className="text-xs text-muted-foreground font-semibold line-clamp-1">
           {address}
         </p>

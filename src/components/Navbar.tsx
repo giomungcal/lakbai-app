@@ -17,9 +17,7 @@ import {
   SignOutButton,
 } from "@clerk/nextjs";
 import { currentUser } from "@clerk/nextjs/server";
-import { Moon, Sun } from "lucide-react";
 import Link from "next/link";
-import { Switch } from "./ui/switch";
 
 async function Navbar() {
   const user = await currentUser();
@@ -45,9 +43,7 @@ async function Navbar() {
                   <DropdownMenuTrigger asChild>
                     <button className="size-9 cursor-pointer">
                       <img
-                        width={36}
-                        height={36}
-                        className="rounded-full object-cover"
+                        className="rounded-full object-cover size-9"
                         src={user?.imageUrl}
                         alt="User Avatar"
                       />
@@ -67,11 +63,11 @@ async function Navbar() {
                       </DropdownMenuItem>
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <SignOutButton>
+                    <SignOutButton>
+                      <DropdownMenuItem asChild>
                         <Link href="/">Logout</Link>
-                      </SignOutButton>
-                    </DropdownMenuItem>
+                      </DropdownMenuItem>
+                    </SignOutButton>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}

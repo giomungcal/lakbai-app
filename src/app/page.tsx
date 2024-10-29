@@ -64,6 +64,7 @@ export default async function Home() {
           </div>
           <div className="w-full flex justify-center ">
             <Image
+              priority
               width={1152}
               height={187}
               className="h-[186px] w-[1140px] object-cover"
@@ -86,8 +87,8 @@ export default async function Home() {
           </div>
           <div aria-hidden className="absolute bottom-24 -right-10 ">
             <Image
-              height={81}
               width={80}
+              height={80}
               src="/feature-icon-2.png"
               alt="Art Icon"
             />
