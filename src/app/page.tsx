@@ -18,7 +18,7 @@ export default async function Home() {
                   <p className="text-xs">lak*bai is live</p>
                 </div>
               </div>
-              <h1 className="font-ZT text-4xl sm:text-6xl lg:text-7xl font-semibold max-w-[650px] text-[#5e975c] dark:text-[#e4e48d] ">
+              <h1 className="font-ZT text-5xl sm:text-6xl lg:text-7xl font-semibold max-w-[650px] text-[#5e975c] dark:text-[#e4e48d] ">
                 plan your next adventure with ease
                 <span className="text-[#EB9B08]">*</span>
               </h1>
@@ -32,7 +32,7 @@ export default async function Home() {
                   <p className="text-xs">💸 free-of-charge</p>
                 </div>
               </div>
-              <p className="max-w-[300px] md:max-w-[475px] text-sm">
+              <p className="max-w-[300px] md:max-w-[475px] text-sm pr-8">
                 Plan your perfect trip effortlessly.{" "}
                 <span className="font-bold">Create</span>,{" "}
                 <span className="font-bold">share</span>, and
@@ -128,8 +128,8 @@ export default async function Home() {
         </section>
 
         {/* Showcase Section */}
-        <section className="py-16 space-y-10 w-full flex flex-col items-center justify-center">
-          <h2 className="text-semibold font-ZT text-3xl tracking-tighter leading-7 text-center px-16">
+        <section className="py-8 sm:py-16 space-y-10 w-full flex flex-col items-center justify-center">
+          <h2 className="text-semibold font-ZT text-2xl sm:text-3xl tracking-tighter leading-7 text-center px-4 md:px-16">
             design your travel itinerary with your{" "}
             <span className="text-[#579D36]">friends</span> 🍍
           </h2>
@@ -149,7 +149,7 @@ export default async function Home() {
 
         {/* AI Showcase Section */}
         <section className="py-16 space-y-10 w-full flex flex-col items-center justify-center">
-          <h2 className="text-semibold font-ZT text-3xl tracking-tighter leading-7 text-center px-16">
+          <h2 className="text-semibold font-ZT text-2xl sm:text-3xl tracking-tighter leading-7 text-center px-4 md:px-16">
             or let AI craft one in as fast as{" "}
             <span className="text-[#2AB3C2]">8 seconds</span> 💡
           </h2>
@@ -169,7 +169,7 @@ export default async function Home() {
 
         {/* CTA Section */}
         <section className="flex flex-col items-center justify-center py-28 space-y-6 mb-8">
-          <h2 className="text-4xl sm:text-5xl tracking-tighter max-w-[480px] font-ZT text-center">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl tracking-tighter max-w-[480px] font-ZT text-center">
             begin your journey with Lakb
             <span className="text-[#5e975c] ">AI</span> now 🌴
           </h2>

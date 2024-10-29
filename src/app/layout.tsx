@@ -13,9 +13,10 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "LakbAI App",
+  title: "LakbAI",
   description:
-    "An AI powered itinerary creator web app with collaboration capabilities",
+    "An AI powered trip planner application with collaboration capabilities.",
+  keywords: ["itinerary creator", "trip planner"],
 };
 
 export default function RootLayout({

@@ -10,7 +10,7 @@ function LandingButton({
   return (
     <button
       className={cn(
-        "dropbox-effect border-black border text-sm px-6 py-2 bg-[#FFD11B] text-black",
+        "dropbox-effect border-black border font-normal text-sm px-6 py-2 bg-[#FFD11B] text-black",
         className
       )}
     >
