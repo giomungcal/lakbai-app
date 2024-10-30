@@ -104,7 +104,7 @@ const ItineraryPage: FC<FetchTripData> = ({
   const [itineraryDetails, setItineraryDetails] =
     useState<ItineraryDetails | null>(itinerary?.[0] ?? null);
   const [tripActivities, setTripActivities] = useState<Activities[] | null>(
-    activities
+    activities || []
   );
   const numOfPeople = NUMBER_OF_PEOPLE.find(
     ({ value }) => value === itineraryDetails?.num_of_people
@@ -163,8 +163,8 @@ const ItineraryPage: FC<FetchTripData> = ({
       setSelectedDay("1");
     }
 
-    syncActivitiesWithDb();
-    syncTripsWithDb();
+    // syncActivitiesWithDb();
+    // syncTripsWithDb();
   }, []);
 
   // Set URL & filter activities on state change
@@ -197,6 +197,7 @@ const ItineraryPage: FC<FetchTripData> = ({
     }
   }, [selectedDay, tripActivities, itineraryDetails?.id]);
 
+  // Runs everytime an activity is added and edited
   useEffect(() => {
     syncActivitiesWithDb();
   }, [requestComplete]);

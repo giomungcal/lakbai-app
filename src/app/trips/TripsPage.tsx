@@ -40,17 +40,12 @@ type TripsProps = Database["public"]["Tables"]["itineraries"]["Row"];
 const TripsPage = ({ userId, serverTrips }: TripsPage) => {
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
-  const [trips, setTrips] = useState<TripsProps[]>([]);
+  const [trips, setTrips] = useState<TripsProps[]>(serverTrips || []);
   const [openAddTrip, setOpenAddTrip] = useState<boolean>(false);
-  const [isTripsLoading, setIsTripsLoading] = useState<boolean>(true);
+  const [isTripsLoading, setIsTripsLoading] = useState<boolean>(false);
 
   const { addTrip, getToken, isAddingTrip, isAddingLakbaiTrip } =
     useTripsContext();
-
-  useEffect(() => {
-    setIsTripsLoading(true);
-    syncTripsWithDatabase();
-  }, []);
 
   const sortedTrips = useMemo(() => {
     const tempTrips = [...trips];
@@ -92,7 +87,6 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
     }
     const updatedItineraries = await getItineraries({ userId, token });
     if (updatedItineraries) setTrips(updatedItineraries);
-    setIsTripsLoading(false);
   }
 
   return (
@@ -165,12 +159,7 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
 
       {/* Trips Section */}
 
-      {isTripsLoading ? (
-        <div className="animate-pulse flex flex-col justify-between max-w-[330px] h-52 bg-secondary/30 rounded-2xl p-5">
-          <div />
-          <div className="w-full h-12 rounded-lg bg-secondary/60" />
-        </div>
-      ) : trips.length === 0 ? (
+      {trips.length === 0 ? (
         <div className="w-full h-80 border-border border-2 bg-card rounded-3xl border-dashed text-center space-y-1 flex flex-col justify-center items-center">
           <span className="text-4xl">👻</span>
           <h2 className="text-2xl font-semibold text-card-foreground">
