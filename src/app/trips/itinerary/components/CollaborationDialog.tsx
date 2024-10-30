@@ -164,7 +164,6 @@ const CollaborationDialog = ({
     setIsUpdatingRole(true);
     const token = await getToken({ template: "lakbai-supabase" });
     const result = await deleteUserRole({ token, roleId });
-    console.log(result);
 
     if (result && result.length !== 0) {
       setUsers((prev) => {

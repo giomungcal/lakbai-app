@@ -26,8 +26,6 @@ const ShareItineraryDialog = ({
   onPublicChange,
   isOwner,
 }: ShareItineraryDialog) => {
-  console.log(window.location.href);
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="p-8 space-y-2">

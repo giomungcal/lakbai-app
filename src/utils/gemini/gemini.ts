@@ -171,6 +171,5 @@ export async function geminiItineraryRun(itineraryDetails: ItineraryDetails) {
 
   const result = await chatSession.sendMessage(prompt);
   const data = result.response.text();
-  console.log(data);
   return JSON.parse(data);
 }
