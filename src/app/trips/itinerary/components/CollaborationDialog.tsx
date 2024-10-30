@@ -144,12 +144,13 @@ const CollaborationDialog = ({
         return prev.map((u) => (u.id === roleId ? { ...u, role } : u));
       });
       toast({
-        title: "User role updated",
-        description: `Role has been updated to ${role}.`,
+        title: "User role has been updated.",
+        // description: `Role has been updated to ${role}.`,
         variant: "default",
       });
 
       setIsUpdatingRole(false);
+      return;
     }
 
     toast({
@@ -238,7 +239,7 @@ const CollaborationDialog = ({
 
                     <div>
                       <p className="font-semibold">{`${
-                        user.first_name ?? "my name jeff"
+                        user.first_name ?? "my name jeff 🤡"
                       } ${user.last_name ?? ""}`}</p>
                       <p className="text-xs text-card-foreground/80 min-w-20">
                         {user.email_address}
