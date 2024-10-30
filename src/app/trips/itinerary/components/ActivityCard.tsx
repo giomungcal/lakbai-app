@@ -162,7 +162,7 @@ const ActivityCard = ({
 
   return (
     <div
-      className={`relative flex items-center space-x-4 bg-card hover:bg-primary/50 border-accent border-2 rounded-2xl p-6 cursor-pointer`}
+      className={`relative flex items-center space-x-4 bg-card hover:bg-primary/50 border-accent border-2 rounded-2xl p-6 cursor-pointer transition-all`}
     >
       {/* Card Details */}
       <div className="text-left space-y-1 pr-6">

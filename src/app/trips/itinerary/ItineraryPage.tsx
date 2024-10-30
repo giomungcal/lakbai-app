@@ -1006,8 +1006,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                     ))}
                     {(userRole === "owner" || userRole === "edit") && (
                       <div
-                        // variant="outline"
-                        className="flex items-center justify-center border-2 rounded-2xl border-dashed border-border cursor-pointer "
+                        className="min-h-[100px] flex items-center justify-center border-2 rounded-2xl border-dashed cursor-pointer bg-card hover:bg-accent transition-all"
                         onClick={() => setIsAddActivityOpen(true)}
                       >
                         <p className="font-medium text-sm sm:text-base text-foreground/60">
