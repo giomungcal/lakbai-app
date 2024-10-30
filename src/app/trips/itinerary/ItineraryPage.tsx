@@ -945,7 +945,7 @@ const ItineraryPage: FC<FetchTripData> = ({
 
           {itineraryDetails!.days_count === 0 ||
             (selectedDay && selectedDay !== "0" && (
-              <section className="flex flex-col space-y-6 p-6 md:p-8 bg-accent/70 rounded-2xl shadow-md">
+              <section className="flex flex-col h-auto space-y-6 p-6 md:p-8 bg-accent/70 rounded-2xl shadow-md">
                 <div className="flex items-center justify-between">
                   <h3 className="text-3xl font-bold">Day {selectedDay}</h3>
                   {(userRole === "owner" || userRole === "edit") && (
@@ -995,7 +995,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                   </div>
                 ) : (
                   // Display all activity cards
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 h-auto">
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 h-full">
                     {filteredActivities.map((a) => (
                       <ActivityCard
                         key={a.id}
