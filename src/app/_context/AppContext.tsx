@@ -203,6 +203,8 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
         if (itineraryDetails.is_created_by_lakbai === true) {
           try {
             const geminiActivityArray = await geminiItineraryRun(itinerary[0]);
+            console.log(geminiActivityArray);
+
             const result = await addActivity({ token, geminiActivityArray });
 
             if (result && result.length !== 0) {

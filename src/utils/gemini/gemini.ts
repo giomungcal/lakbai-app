@@ -27,7 +27,7 @@ export async function geminiItineraryRun(itineraryDetails: ItineraryDetails) {
 
   const prompt = `Generate Travel Plan for Location : ${address}, for ${days_count} Days for ${
     companionType!.display
-  }. Suggest itinerary with places: time, day (number), name (make it descriptive), address (it should be formatted as name of place, then the city/province its in e.g. "McCully Shopping Center, Honolulu"), description, and all with the same itinerary_id: ${id}. Make sure they are relatively near each other, and that they will travel the whole day at least 7 destinations per day for ${days_count} days, make sure that the destination is legitimate. Everything should within one array in JSON format.`;
+  }. Suggest itinerary with places: time, day (number), name (make it descriptive), address (it should be formatted as name of place, then the city/province its in e.g. "McCully Shopping Center, Honolulu"), description, and all with the same itinerary_id: ${id}. Make sure they are relatively near each other, with at least 7 destinations per day for ${days_count} days, make sure that the destination is legitimate. All in JSON format - do not use quotes within the value strings.`;
 
   const chatSession = model.startChat({
     generationConfig,
@@ -171,5 +171,6 @@ export async function geminiItineraryRun(itineraryDetails: ItineraryDetails) {
 
   const result = await chatSession.sendMessage(prompt);
   const data = result.response.text();
+  console.log(data);
   return JSON.parse(data);
 }
