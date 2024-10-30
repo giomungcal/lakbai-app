@@ -105,6 +105,7 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const hasMounted = useRef(false);
 
+  // Set theme on mount
   useEffect(() => {
     const isDarkMode = window.matchMedia(
       "(prefers-color-scheme: dark)"
@@ -123,6 +124,7 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
     }
   }, []);
 
+  // Update local storage on theme change
   useEffect(() => {
     if (hasMounted.current) {
       const dark_serialized = JSON.stringify(darkMode);
@@ -137,24 +139,6 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
     }
     hasMounted.current = true;
   }, [darkMode]);
-
-  function validationForm() {
-    const { name, address, emoji, start_date, end_date, num_of_people } =
-      itineraryDetails;
-
-    if (
-      !name ||
-      !address ||
-      !emoji ||
-      !start_date ||
-      !end_date ||
-      !num_of_people
-    ) {
-      return false;
-    } else {
-      return true;
-    }
-  }
 
   // Calculate the days_count based on provided date.
   useEffect(() => {
@@ -180,6 +164,24 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
     setItineraryDetails(defaultItinerary);
     setStartDate(new Date());
     setEndDate(new Date());
+  }
+
+  function validationForm() {
+    const { name, address, emoji, start_date, end_date, num_of_people } =
+      itineraryDetails;
+
+    if (
+      !name ||
+      !address ||
+      !emoji ||
+      !start_date ||
+      !end_date ||
+      !num_of_people
+    ) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   async function addTrip() {

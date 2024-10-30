@@ -1,6 +1,7 @@
 import {
   defaultActivityAdd,
   useActivitiesContext,
+  useTripsContext,
 } from "@/app/_context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ const AddActivitySheet = ({
   itineraryId,
   selectedDay: day,
 }: AddActivitySheet) => {
+  const { darkMode } = useTripsContext();
   const {
     activityData,
     setActivityData,
@@ -116,6 +118,25 @@ const AddActivitySheet = ({
                     option: (provided) => ({
                       ...provided,
                       color: "black",
+                    }),
+                    input: (provided) => ({
+                      ...provided,
+                      color: darkMode ? "white" : "black",
+                      fontSize: "0.875rem",
+                    }),
+                    singleValue: (provided) => ({
+                      ...provided,
+                      color: darkMode ? "white" : "black",
+                      fontSize: "0.875rem",
+                    }),
+                    control: (provided) => ({
+                      ...provided,
+                      backgroundColor: darkMode
+                        ? "hsl(74 58% 8%)"
+                        : "hsl(74 56% 98%)",
+                      borderColor: darkMode
+                        ? "hsl(197.14 6.09% 22.55%)"
+                        : "hsl(220 13% 91%)",
                     }),
                   },
                 }}

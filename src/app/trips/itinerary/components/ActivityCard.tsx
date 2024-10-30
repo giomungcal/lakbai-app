@@ -1,6 +1,9 @@
 "use client";
 
-import { useActivitiesContext } from "@/app/_context/AppContext";
+import {
+  useActivitiesContext,
+  useTripsContext,
+} from "@/app/_context/AppContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,6 +82,8 @@ const ActivityCard = ({
   const { editData, setEditData, editActivity, getToken } =
     useActivitiesContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { darkMode } = useTripsContext();
 
   const timeHour = time && time.split(":")[0];
   const timeMinute = time && time.split(":")[1].split(" ")[0];
@@ -344,6 +349,25 @@ const ActivityCard = ({
                         option: (provided) => ({
                           ...provided,
                           color: "black",
+                        }),
+                        input: (provided) => ({
+                          ...provided,
+                          color: darkMode ? "white" : "black",
+                          fontSize: "0.875rem",
+                        }),
+                        singleValue: (provided) => ({
+                          ...provided,
+                          color: darkMode ? "white" : "black",
+                          fontSize: "0.875rem",
+                        }),
+                        control: (provided) => ({
+                          ...provided,
+                          backgroundColor: darkMode
+                            ? "hsl(74 58% 8%)"
+                            : "hsl(74 56% 98%)",
+                          borderColor: darkMode
+                            ? "hsl(197.14 6.09% 22.55%)"
+                            : "hsl(220 13% 91%)",
                         }),
                       },
                     }}

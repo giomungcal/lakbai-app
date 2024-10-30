@@ -65,7 +65,7 @@ async function Navbar() {
                     <DropdownMenuSeparator />
                     <SignOutButton>
                       <DropdownMenuItem asChild>
-                        <Link href="/">Logout</Link>
+                        <Link href="/">Log out</Link>
                       </DropdownMenuItem>
                     </SignOutButton>
                   </DropdownMenuContent>

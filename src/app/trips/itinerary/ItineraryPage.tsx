@@ -124,6 +124,7 @@ const ItineraryPage: FC<FetchTripData> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const {
+    darkMode,
     getToken,
     editTrip,
     editTripData,
@@ -163,8 +164,8 @@ const ItineraryPage: FC<FetchTripData> = ({
       setSelectedDay("1");
     }
 
-    // syncActivitiesWithDb();
-    // syncTripsWithDb();
+    syncActivitiesWithDb();
+    syncTripsWithDb();
   }, []);
 
   // Set URL & filter activities on state change
@@ -459,15 +460,20 @@ const ItineraryPage: FC<FetchTripData> = ({
         {/* Title Section */}
         <section className="flex flex-row justify-between w-full mb-14">
           <div className="flex flex-col space-y-3">
-            <div className="flex mb-4">
-              <Button
-                variant="outline"
-                className="bg-white/50 dark:bg-accent/70"
-                asChild
-              >
-                <Link href={"/trips"}>&lt;-- Back to Trips</Link>
-              </Button>
-            </div>
+            {(userRole === "edit" ||
+              userRole === "view" ||
+              userRole === "owner") && (
+              <div className="flex mb-4">
+                <Button
+                  variant="outline"
+                  className="bg-white/50 dark:bg-accent/70"
+                  asChild
+                >
+                  <Link href={"/trips"}>&lt;-- Back to Trips</Link>
+                </Button>
+              </div>
+            )}
+
             <div className="flex flex-col md:flex-row text-5xl md:text-6xl font-bold text-left space-y-4 md:space-y-0 mr-4">
               <h1 className="text-title dark:text-title-foreground text">
                 {itineraryDetails?.name ?? "Gio's Crazy Party"}
@@ -675,6 +681,25 @@ const ItineraryPage: FC<FetchTripData> = ({
                             ...provided,
                             color: "black",
                           }),
+                          input: (provided) => ({
+                            ...provided,
+                            color: darkMode ? "white" : "black",
+                            fontSize: "0.875rem",
+                          }),
+                          singleValue: (provided) => ({
+                            ...provided,
+                            color: darkMode ? "white" : "black",
+                            fontSize: "0.875rem",
+                          }),
+                          control: (provided) => ({
+                            ...provided,
+                            backgroundColor: darkMode
+                              ? "hsl(74 58% 8%)"
+                              : "hsl(74 56% 98%)",
+                            borderColor: darkMode
+                              ? "hsl(197.14 6.09% 22.55%)"
+                              : "hsl(220 13% 91%)",
+                          }),
                         },
                       }}
                     />
@@ -741,6 +766,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                     <PopoverContent className="w-auto p-0">
                       <Calendar
                         mode="single"
+                        defaultMonth={startDate || new Date()}
                         selected={endDate}
                         onSelect={(value) => {
                           if (value) {

@@ -42,10 +42,14 @@ const TripsPage = ({ userId, serverTrips }: TripsPage) => {
 
   const [trips, setTrips] = useState<TripsProps[]>(serverTrips || []);
   const [openAddTrip, setOpenAddTrip] = useState<boolean>(false);
-  const [isTripsLoading, setIsTripsLoading] = useState<boolean>(false);
+  // const [isTripsLoading, setIsTripsLoading] = useState<boolean>(false);
 
   const { addTrip, getToken, isAddingTrip, isAddingLakbaiTrip } =
     useTripsContext();
+
+  useEffect(() => {
+    syncTripsWithDatabase();
+  }, []);
 
   const sortedTrips = useMemo(() => {
     const tempTrips = [...trips];

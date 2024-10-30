@@ -35,13 +35,12 @@ import GooglePlacesAutocomplete from "react-google-places-autocomplete";
 
 export const AddTripForm = ({ className }: { className: string }) => {
   const {
+    darkMode,
     startDate,
     setStartDate,
     setEndDate,
     endDate,
-
     isAddingTrip,
-
     itineraryDetails,
     setItineraryDetails,
   } = useTripsContext();
@@ -104,15 +103,34 @@ export const AddTripForm = ({ className }: { className: string }) => {
                   ...provided,
                   color: "black",
                 }),
+                input: (provided) => ({
+                  ...provided,
+                  color: darkMode ? "white" : "black",
+                  fontSize: "0.875rem",
+                }),
+                singleValue: (provided) => ({
+                  ...provided,
+                  color: darkMode ? "white" : "black",
+                  fontSize: "0.875rem",
+                }),
+                control: (provided) => ({
+                  ...provided,
+                  backgroundColor: darkMode
+                    ? "hsl(74 58% 8%)"
+                    : "hsl(74 56% 98%)",
+                  borderColor: darkMode
+                    ? "hsl(197.14 6.09% 22.55%)"
+                    : "hsl(220 13% 91%)",
+                }),
               },
             }}
           />
         </div>
         <div className="flex flex-col space-y-1.5">
-          <Label htmlFor="dateStart">Date Start</Label>
+          <Label>Date Start</Label>
 
           <Popover>
-            <PopoverTrigger disabled={isAddingTrip} id="dateStart" asChild>
+            <PopoverTrigger disabled={isAddingTrip} asChild>
               <Button
                 variant={"outline"}
                 className={cn(
@@ -148,9 +166,9 @@ export const AddTripForm = ({ className }: { className: string }) => {
         </div>
 
         <div className="flex flex-col space-y-1.5">
-          <Label htmlFor="dateEnd">Date End</Label>
+          <Label>Date End</Label>
           <Popover>
-            <PopoverTrigger disabled={isAddingTrip} id="dateEnd" asChild>
+            <PopoverTrigger disabled={isAddingTrip} asChild>
               <Button
                 variant={"outline"}
                 className={cn(
@@ -165,6 +183,7 @@ export const AddTripForm = ({ className }: { className: string }) => {
             <PopoverContent className="w-auto p-0">
               <Calendar
                 mode="single"
+                defaultMonth={startDate || new Date()}
                 selected={endDate}
                 onSelect={(value) => {
                   if (value) {
