@@ -203,7 +203,14 @@ export const TripsContextProvider = ({ children }: ContextProviderProps) => {
         if (itineraryDetails.is_created_by_lakbai === true) {
           try {
             const geminiActivityArray = await geminiItineraryRun(itinerary[0]);
-            console.log(geminiActivityArray);
+            if (!geminiActivityArray) {
+              toast({
+                title: "Uh oh! Something went wrong.",
+                description:
+                  "LakbAI trip generation is currently inactive. Trip created with incomplete details.",
+                variant: "default",
+              });
+            }
 
             const result = await addActivity({ token, geminiActivityArray });
 

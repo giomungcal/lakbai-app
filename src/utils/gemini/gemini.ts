@@ -1,5 +1,7 @@
 "use server";
 
+export const maxDuration = 20;
+
 import { NUMBER_OF_PEOPLE } from "@/validators/options";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Database } from "../../../database.types";
