@@ -237,7 +237,9 @@ const CollaborationDialog = ({
                     </div>
 
                     <div>
-                      <p className="font-semibold">{`${user.first_name} ${user.last_name}`}</p>
+                      <p className="font-semibold">{`${
+                        user.first_name ?? "my name jeff"
+                      } ${user.last_name ?? ""}`}</p>
                       <p className="text-xs text-card-foreground/80 min-w-20">
                         {user.email_address}
                       </p>
