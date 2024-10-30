@@ -49,6 +49,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { supabaseClient } from "@/utils/supabase/supabaseClient";
@@ -81,12 +91,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
 import GooglePlacesAutocomplete from "react-google-places-autocomplete";
+import { useReactToPrint } from "react-to-print";
 import { Database } from "../../../../database.types";
 import ActivityCard from "./components/ActivityCard";
 import AddActivitySheet from "./components/AddActivitySheet";
 import CollaborationDialog from "./components/CollaborationDialog";
+import PrintItinerary from "./components/PrintItinerary";
 import ShareItineraryDialog from "./components/ShareItineraryDialog";
 import { FetchTripData } from "./page";
 
@@ -106,6 +118,10 @@ const ItineraryPage: FC<FetchTripData> = ({
   const [tripActivities, setTripActivities] = useState<Activities[] | null>(
     activities || []
   );
+
+  const contentRef = useRef<HTMLDivElement>(null);
+  const reactToPrintFn = useReactToPrint({ contentRef });
+
   const numOfPeople = NUMBER_OF_PEOPLE.find(
     ({ value }) => value === itineraryDetails?.num_of_people
   );
@@ -147,6 +163,22 @@ const ItineraryPage: FC<FetchTripData> = ({
     return { dateStartFormatted, dateEndFormatted };
   }, [itineraryDetails]);
 
+  // Sorted Activities used in printing itineraries
+  const sortedActivities = useMemo(() => {
+    if (activities) {
+      const sortedActivities = [...activities];
+
+      sortedActivities?.sort((a, b) => {
+        return (
+          new Date(`2024/10/${a.day} ${a.time}`).getTime() -
+          new Date(`2024/10/${b.day} ${b.time}`).getTime()
+        );
+      });
+
+      return sortedActivities as Activities[];
+    }
+  }, [tripActivities]);
+
   const emojiObject = EMOJIS.find((i) => i.value === itineraryDetails?.emoji);
   const capitalizedRole = userRole.charAt(0).toUpperCase() + userRole.slice(1);
 
@@ -177,10 +209,8 @@ const ItineraryPage: FC<FetchTripData> = ({
         "",
         `?id=${itineraryDetails?.id}&day=${selectedDay}`
       );
-    }
 
-    // Filter activities on state change
-    if (selectedDay) {
+      // Filter activities on state change
       const activities = tripActivities?.filter((i) => i.day === +selectedDay);
 
       activities?.sort((a, b) => {
@@ -551,6 +581,7 @@ const ItineraryPage: FC<FetchTripData> = ({
             )}
           </div>
 
+          {/* Dropdown Menu */}
           <div className="flex flex-col justify-start">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -572,7 +603,10 @@ const ItineraryPage: FC<FetchTripData> = ({
                     <span>Edit Trip Details</span>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => reactToPrintFn()}
+                >
                   <Printer className="mr-2 h-4 w-4" />
                   <span>Print Itinerary</span>
                 </DropdownMenuItem>
@@ -1036,6 +1070,49 @@ const ItineraryPage: FC<FetchTripData> = ({
               </section>
             ))}
         </section>
+
+        {/* HIDDEN: Print Itinerary Table */}
+        <div className="hidden">
+          <section className="space-y-2 p-12" ref={contentRef}>
+            <h3 className="text-4xl font-semibold">Travel Itinerary</h3>
+            <p>
+              <span className="font-bold">Destination:</span>{" "}
+              {itineraryDetails?.address}
+            </p>
+            <p>
+              <span className="font-bold">Date:</span> {dateStartFormatted} to{" "}
+              {dateEndFormatted}
+            </p>
+            <Table>
+              <TableCaption>Travel Itinerary</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Day</TableHead>
+                  <TableHead>Time</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead>Details</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedActivities?.map((activity) => (
+                  <TableRow key={activity.id}>
+                    <TableCell className="font-medium">
+                      {activity.day}
+                    </TableCell>
+                    <TableCell>{activity.time}</TableCell>
+                    <TableCell>{activity.name}</TableCell>
+                    <TableCell>{activity.address}</TableCell>
+                    <TableCell>
+                      {activity.description || "No details."}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter></TableFooter>
+            </Table>
+          </section>
+        </div>
       </div>
     </MaxWidthWrapper>
   );
