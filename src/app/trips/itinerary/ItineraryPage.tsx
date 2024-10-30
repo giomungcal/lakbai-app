@@ -98,7 +98,6 @@ import { Database } from "../../../../database.types";
 import ActivityCard from "./components/ActivityCard";
 import AddActivitySheet from "./components/AddActivitySheet";
 import CollaborationDialog from "./components/CollaborationDialog";
-import PrintItinerary from "./components/PrintItinerary";
 import ShareItineraryDialog from "./components/ShareItineraryDialog";
 import { FetchTripData } from "./page";
 
