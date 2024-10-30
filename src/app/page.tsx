@@ -136,12 +136,12 @@ export default async function Home() {
           <div className="lg:mx-4 p-2 md:p-4 border rounded-xl bg-gray-900/5 dark:bg-accent/20">
             <img
               className="block dark:hidden rounded-lg border ]"
-              src="https://imgur.com/jg8MTM3.png"
+              src="https://imgur.com/H0nsx2r.png"
               alt="LakbAI GIF Light Mode"
             />
             <img
               className="hidden dark:block rounded-lg border "
-              src="https://imgur.com/cOU6KFl.png"
+              src="https://imgur.com/gaWNnEq.png"
               alt="LakbAI GIF Dark Mode"
             />
           </div>
