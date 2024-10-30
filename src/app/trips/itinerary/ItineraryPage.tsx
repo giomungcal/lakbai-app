@@ -974,7 +974,7 @@ const ItineraryPage: FC<FetchTripData> = ({
 
                 {/* Check if there are activities in the DB for the selected day */}
                 {!filteredActivities || filteredActivities.length === 0 ? (
-                  <div className="w-full flex flex-col justify-center items-center min-h-56 space-y-1 bg-card border-border border-2 border-dashed rounded-xl transition-all">
+                  <div className="w-full flex h- flex-col justify-center items-center min-h-56 space-y-1 bg-card border-border border-2 border-dashed rounded-xl transition-all">
                     <span className="text-2xl">👻</span>
                     <h3 className="text-lg">
                       {userRole == "edit" || userRole === "owner"
@@ -995,7 +995,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                   </div>
                 ) : (
                   // Display all activity cards
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 h-auto">
                     {filteredActivities.map((a) => (
                       <ActivityCard
                         key={a.id}
@@ -1007,7 +1007,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                     {(userRole === "owner" || userRole === "edit") && (
                       <Button
                         variant="outline"
-                        className="h-full min-h-[100px] flex items-center justify-center border-2 rounded-2xl border-dashed border-border cursor-pointer "
+                        className="h-auto flex items-center justify-center border-2 rounded-2xl border-dashed border-border cursor-pointer "
                         onClick={() => setIsAddActivityOpen(true)}
                       >
                         <p className="font-medium text-sm sm:text-base text-foreground/60">
