@@ -1005,15 +1005,15 @@ const ItineraryPage: FC<FetchTripData> = ({
                       />
                     ))}
                     {(userRole === "owner" || userRole === "edit") && (
-                      <Button
-                        variant="outline"
-                        className="h-auto flex items-center justify-center border-2 rounded-2xl border-dashed border-border cursor-pointer "
+                      <div
+                        // variant="outline"
+                        className="flex items-center justify-center border-2 rounded-2xl border-dashed border-border cursor-pointer "
                         onClick={() => setIsAddActivityOpen(true)}
                       >
                         <p className="font-medium text-sm sm:text-base text-foreground/60">
                           + add activity
                         </p>
-                      </Button>
+                      </div>
                     )}
                   </div>
                 )}
