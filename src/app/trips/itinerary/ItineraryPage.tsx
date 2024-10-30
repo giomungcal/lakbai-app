@@ -738,7 +738,6 @@ const ItineraryPage: FC<FetchTripData> = ({
                             }));
                           }
                         }}
-                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
@@ -777,7 +776,6 @@ const ItineraryPage: FC<FetchTripData> = ({
                             }));
                           }
                         }}
-                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>

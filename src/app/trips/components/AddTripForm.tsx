@@ -159,7 +159,6 @@ export const AddTripForm = ({ className }: { className: string }) => {
                     }));
                   }
                 }}
-                initialFocus
               />
             </PopoverContent>
           </Popover>
@@ -194,7 +193,6 @@ export const AddTripForm = ({ className }: { className: string }) => {
                     }));
                   }
                 }}
-                initialFocus
               />
             </PopoverContent>
           </Popover>
