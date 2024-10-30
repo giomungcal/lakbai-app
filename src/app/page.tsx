@@ -136,13 +136,13 @@ export default async function Home() {
           <div className="lg:mx-4 p-2 md:p-4 border rounded-xl bg-gray-900/5 dark:bg-accent/20">
             <img
               className="block dark:hidden rounded-lg border ]"
-              src="https://imgur.com/AU0aZBG.png"
-              alt="LakbAI Screenshot Dark Mode"
+              src="https://imgur.com/Tt5GJS0.gif"
+              alt="LakbAI GIF Light Mode"
             />
             <img
               className="hidden dark:block rounded-lg border "
-              src="https://i.imgur.com/cOU6KFl.png"
-              alt="LakbAI Screenshot Light Mode"
+              src="https://imgur.com/MFc9Bye.gif"
+              alt="LakbAI GIF Dark Mode"
             />
           </div>
         </section>
@@ -156,13 +156,13 @@ export default async function Home() {
           <div className="lg:mx-4 p-2 md:p-4 border rounded-xl bg-gray-900/5 dark:bg-accent/20 ">
             <img
               className="block dark:hidden rounded-lg border "
-              src="https://imgur.com/ib10QIP.png"
-              alt="LakbAI Screenshot Dark Mode"
+              src="https://imgur.com/QlBdkoa.gif"
+              alt="LakbAI GIF Light Mode"
             />
             <img
               className="hidden dark:block rounded-lg border"
-              src="https://i.imgur.com/oX8BKpZ.png"
-              alt="LakbAI Screenshot Light Mode"
+              src="https://imgur.com/nYBDtRV.gif"
+              alt="LakbAI GIF Dark Mode"
             />
           </div>
         </section>
