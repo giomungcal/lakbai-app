@@ -119,12 +119,12 @@ const ItineraryPage: FC<FetchTripData> = ({
   );
 
   // React-To-Print
-  const [isPrinting, setIsPrinting] = useState<boolean>(false);
+  // const [isPrinting, setIsPrinting] = useState<boolean>(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const reactToPrintFn = useReactToPrint({
     contentRef,
-    onBeforePrint: async () => await setIsPrinting(true),
-    onAfterPrint: async () => await setIsPrinting(false),
+    // onBeforePrint: async () => await setIsPrinting(true),
+    // onAfterPrint: async () => await setIsPrinting(false),
     onPrintError: (error) => console.error(error),
     preserveAfterPrint: true,
   });
@@ -1080,9 +1080,7 @@ const ItineraryPage: FC<FetchTripData> = ({
 
         {/* HIDDEN: Print Itinerary Table */}
         <section
-          className={`${
-            isPrinting ? "block" : "hidden"
-          } printContent space-y-2 p-12 text-black bg-white`}
+          className={`printContent space-y-2 p-8 text-black bg-white`}
           ref={contentRef}
         >
           <h3 className="text-4xl font-semibold">Travel Itinerary</h3>
