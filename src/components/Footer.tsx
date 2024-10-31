@@ -10,7 +10,7 @@ const Footer = () => {
   const { darkMode, setDarkMode } = useTripsContext();
 
   return (
-    <footer className="py-8 border border-x-0 border-b-0 backdrop-blur-sm print:hidden">
+    <footer className="py-8 border border-x-0 border-b-0 backdrop-blur-sm">
       <MaxWidthWrapper className="min-h-20 space-y-4 flex flex-col md:flex-row space justify-around md:justify-between items-center text-xs text-card-foreground/60 transition-colors">
         <div className="">
           <h4>
