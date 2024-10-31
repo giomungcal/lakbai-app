@@ -1079,44 +1079,48 @@ const ItineraryPage: FC<FetchTripData> = ({
         </section>
 
         {/* HIDDEN: Print Itinerary Table */}
-        <section
-          className={`printContent space-y-2 p-8 text-black bg-white`}
-          ref={contentRef}
-        >
-          <h3 className="text-4xl font-semibold">Travel Itinerary</h3>
-          <p>
-            <span className="font-bold">Destination:</span>{" "}
-            {itineraryDetails?.address}
-          </p>
-          <p>
-            <span className="font-bold">Date:</span> {dateStartFormatted} to{" "}
-            {dateEndFormatted}
-          </p>
-          <Table>
-            <TableCaption>Travel Itinerary</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Day</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Address</TableHead>
-                {/* <TableHead>Details</TableHead> */}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedActivities?.map((activity) => (
-                <TableRow key={activity.id}>
-                  <TableCell className="font-medium">{activity.day}</TableCell>
-                  <TableCell>{activity.time}</TableCell>
-                  <TableCell>{activity.name}</TableCell>
-                  <TableCell>{activity.address}</TableCell>
-                  {/* <TableCell>{activity.description || "No details."}</TableCell> */}
+        <div className="hidden">
+          <section
+            className={`printContent space-y-2 p-8 text-black bg-white`}
+            ref={contentRef}
+          >
+            <h3 className="text-4xl font-semibold">Travel Itinerary</h3>
+            <p>
+              <span className="font-bold">Destination:</span>{" "}
+              {itineraryDetails?.address}
+            </p>
+            <p>
+              <span className="font-bold">Date:</span> {dateStartFormatted} to{" "}
+              {dateEndFormatted}
+            </p>
+            <Table>
+              <TableCaption>Travel Itinerary</TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Day</TableHead>
+                  <TableHead>Time</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Address</TableHead>
+                  {/* <TableHead>Details</TableHead> */}
                 </TableRow>
-              ))}
-            </TableBody>
-            <TableFooter></TableFooter>
-          </Table>
-        </section>
+              </TableHeader>
+              <TableBody>
+                {sortedActivities?.map((activity) => (
+                  <TableRow key={activity.id}>
+                    <TableCell className="font-medium">
+                      {activity.day}
+                    </TableCell>
+                    <TableCell>{activity.time}</TableCell>
+                    <TableCell>{activity.name}</TableCell>
+                    <TableCell>{activity.address}</TableCell>
+                    {/* <TableCell>{activity.description || "No details."}</TableCell> */}
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter></TableFooter>
+            </Table>
+          </section>
+        </div>
       </div>
     </MaxWidthWrapper>
   );
