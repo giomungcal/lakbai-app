@@ -574,8 +574,6 @@ export const updateUserRole = async ({
     .eq("id", roleId)
     .select();
 
-  console.error(error);
-
   if (error) {
     console.error(
       "There has been an error updating user role: ",

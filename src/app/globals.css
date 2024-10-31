@@ -89,6 +89,14 @@ body {
   }
 }
 
+.printContent {
+  display: none;
+
+  @media print {
+    display: block;
+  }
+}
+
 .dropbox-effect {
   position: relative;
   transition-property: all;
