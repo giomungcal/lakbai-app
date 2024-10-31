@@ -62,12 +62,11 @@ export default async function Home() {
               </SignedIn>
             </div>
           </div>
-          <div className="w-full flex justify-center ">
+          <div className="w-full flex justify-center">
             <Image
               priority
-              width={1152}
-              height={187}
-              className="h-[186px] w-[1140px] object-cover"
+              width={1641}
+              height={268}
               src="/hero-peeps.png"
               alt="Hero Section Peeps Illustration"
             />
