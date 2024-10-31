@@ -11,8 +11,11 @@ export const EMOJIS = [
   { value: "City", emoji: "🌃" },
   { value: "Island", emoji: "🏝️" },
   { value: "Camping", emoji: "⛺" },
+  { value: "Museum", emoji: "🏛️" },
+  { value: "Wine", emoji: "🍷" },
+  { value: "Road", emoji: "🚗" },
   { value: "Water", emoji: "🐋" },
-  { value: "ThemePark", emoji: "🎢" },
+  { value: "Cruise", emoji: "🚢" },
   { value: "Jungle", emoji: "🦜" },
   { value: "Party", emoji: "👽" },
 ] as const;
@@ -29,7 +32,7 @@ export type NumberOfPeopleEntry = {
 export const NUMBER_OF_PEOPLE = [
   { value: "1", display: "🙋‍♂️ Solo Traveling (1 person)" },
   { value: "2", display: "👨‍❤️‍👨 With a Partner/Friend (2 people)" },
-  { value: "3", display: "👨‍👨‍👧 Family/Friend Group (3-8 people)" },
+  { value: "3", display: "👨‍👨‍👧 Family/Friend Group (3-7 people)" },
   { value: "8", display: "🤹‍♀️ Big Group (8 or more)" },
 ] as const;
 
