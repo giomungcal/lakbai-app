@@ -7,7 +7,6 @@ export type EmojiEntry = {
 
 export const EMOJIS = [
   { value: "Beach", emoji: "🏖️" },
-  { value: "Mountains", emoji: "🌄" },
   { value: "City", emoji: "🌃" },
   { value: "Island", emoji: "🏝️" },
   { value: "Camping", emoji: "⛺" },
