@@ -125,6 +125,8 @@ const ItineraryPage: FC<FetchTripData> = ({
     contentRef,
     onBeforePrint: async () => await setIsPrinting(true),
     onAfterPrint: async () => await setIsPrinting(false),
+    onPrintError: (error) => console.error(error),
+    preserveAfterPrint: true,
   });
 
   const numOfPeople = NUMBER_OF_PEOPLE.find(
@@ -864,10 +866,10 @@ const ItineraryPage: FC<FetchTripData> = ({
         )}
 
         {/* Horizontal Separator */}
-        <div className="h-px w-full bg-border"></div>
+        <div className="h-px w-full bg-border print:hidden"></div>
 
         {/* Itinerary Section */}
-        <section className="flex flex-col space-y-10 mt-8 w-full">
+        <section className="flex flex-col space-y-10 mt-8 w-full print:hidden">
           <div className="flex flex-col sm:flex-row space-y-3 justify-between">
             <div className="space-y-2 text-left">
               <h1 className="text-4xl font-bold">Itinerary</h1>
@@ -1100,7 +1102,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                 <TableHead>Time</TableHead>
                 <TableHead>Title</TableHead>
                 <TableHead>Address</TableHead>
-                <TableHead>Details</TableHead>
+                {/* <TableHead>Details</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -1110,7 +1112,7 @@ const ItineraryPage: FC<FetchTripData> = ({
                   <TableCell>{activity.time}</TableCell>
                   <TableCell>{activity.name}</TableCell>
                   <TableCell>{activity.address}</TableCell>
-                  <TableCell>{activity.description || "No details."}</TableCell>
+                  {/* <TableCell>{activity.description || "No details."}</TableCell> */}
                 </TableRow>
               ))}
             </TableBody>

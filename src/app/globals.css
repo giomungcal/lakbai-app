@@ -90,6 +90,13 @@ body {
 }
 
 @media print {
+  html,
+  body {
+    height: 100%; /* Use 100% here to support printing more than a single page*/
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+  }
   .printContent {
     display: block;
   }
