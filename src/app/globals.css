@@ -89,10 +89,8 @@ body {
   }
 }
 
-.printContent {
-  display: none;
-
-  @media print {
+@media print {
+  .printContent {
     display: block;
   }
 }

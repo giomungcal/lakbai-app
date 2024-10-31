@@ -119,8 +119,13 @@ const ItineraryPage: FC<FetchTripData> = ({
   );
 
   // React-To-Print
+  const [isPrinting, setIsPrinting] = useState<boolean>(false);
   const contentRef = useRef<HTMLDivElement>(null);
-  const reactToPrintFn = useReactToPrint({ contentRef });
+  const reactToPrintFn = useReactToPrint({
+    contentRef,
+    onBeforePrint: async () => await setIsPrinting(true),
+    onAfterPrint: async () => await setIsPrinting(false),
+  });
 
   const numOfPeople = NUMBER_OF_PEOPLE.find(
     ({ value }) => value === itineraryDetails?.num_of_people
@@ -1072,7 +1077,12 @@ const ItineraryPage: FC<FetchTripData> = ({
         </section>
 
         {/* HIDDEN: Print Itinerary Table */}
-        <section className="printContent space-y-2 p-12" ref={contentRef}>
+        <section
+          className={`${
+            isPrinting ? "block" : "hidden"
+          } printContent space-y-2 p-12`}
+          ref={contentRef}
+        >
           <h3 className="text-4xl font-semibold">Travel Itinerary</h3>
           <p>
             <span className="font-bold">Destination:</span>{" "}
