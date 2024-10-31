@@ -23,7 +23,7 @@ async function Navbar() {
   const user = await currentUser();
 
   return (
-    <header className="sticky h-14 z-40 inset-x-0 top-0 w-full border border-t-0 border-x-0 backdrop-blur-md transition-all">
+    <header className="sticky h-14 z-40 inset-x-0 top-0 w-full border border-t-0 border-x-0 backdrop-blur-md transition-all print:hidden">
       <MaxWidthWrapper>
         <nav className="h-14 flex justify-between items-center">
           <div className="h-full flex items-center">
