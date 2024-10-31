@@ -514,7 +514,7 @@ const ItineraryPage: FC<FetchTripData> = ({
             <div className="flex flex-col md:flex-row text-5xl md:text-6xl font-bold text-left space-y-4 md:space-y-0 mr-4">
               <h1 className="text-title dark:text-title-foreground text">
                 {itineraryDetails?.name ?? "Gio's Crazy Party"}
-                <span className="ml-2">{emojiObject?.emoji ?? "🦜"}</span>
+                <span className="ml-2">{emojiObject?.emoji ?? "🧛‍♀️"}</span>
               </h1>
             </div>
 
