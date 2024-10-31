@@ -495,7 +495,7 @@ const ItineraryPage: FC<FetchTripData> = ({
     <MaxWidthWrapper className="flex w-full flex-col py-14 md:py-20">
       <div className="list-inside list-decimal text-sm text-center sm:text-left">
         {/* Title Section */}
-        <section className="flex flex-row justify-between w-full mb-14">
+        <section className="flex flex-row justify-between w-full mb-14 print:hidden">
           <div className="flex flex-col space-y-3">
             {(userRole === "edit" ||
               userRole === "view" ||
@@ -1081,7 +1081,7 @@ const ItineraryPage: FC<FetchTripData> = ({
         {/* HIDDEN: Print Itinerary Table */}
         <div className="hidden print:block">
           <section
-            className={`printContent space-y-2 p-8 text-black bg-white`}
+            className={`printContent space-y-2 p-6 text-black bg-white`}
             ref={contentRef}
           >
             <h3 className="text-4xl font-semibold">Travel Itinerary</h3>
