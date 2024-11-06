@@ -12,6 +12,14 @@ LakbAI allows users to create, share, and collaborate on travel itineraries with
 
 Built the app from scratch, including wireframing, brand creation, design, and coding, ensuring consistency throughout the process.
 
+## **Ideation and Wireframing:**
+
+![alt text](https://imgur.com/3Foafb5.png)
+
+## **Landing Page UI Design:**
+
+![alt text](https://imgur.com/f5IXdkD.png)
+
 `i learned a looot from creating this project - all built from scratch !`
 
 _this project made me love web development even more ⭐_
