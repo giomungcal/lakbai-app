@@ -16,7 +16,7 @@ Built the app from scratch, including wireframing, brand creation, design, and c
 
 ![alt text](https://imgur.com/3Foafb5.png)
 
-## **Landing Page UI Design:**
+## **High Fidelity UI (Landing Page):**
 
 ![alt text](https://imgur.com/f5IXdkD.png)
 
