@@ -1,36 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🐸 LakbAI App _(AI-Powered Trip Planner)_ 
 
-## Getting Started
+`In Filipino, lakbay means "journey" or "travel." It refers to the act of traveling or embarking on a journey, whether physically, metaphorically, or emotionally.`
 
-First, run the development server:
+- designed in _**figma and adobe photoshop**_
+- made with _**next.js, typescript, supabase, gemini AI, tailwindcss, shadcn/ui, and clerk auth**_
+- deployed with _**vercel**_
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+![alt text](https://imgur.com/gaWNnEq.png)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+LakbAI allows users to create, share, and collaborate on travel itineraries with friends. Integrated with Gemini AI to streamline trip planning, offering personalized, AI-generated itineraries tailored to each user's preferences.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Built the app from scratch, including wireframing, brand creation, design, and coding, ensuring consistency throughout the process.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## **Ideation and Wireframing:**
 
-## Learn More
+![alt text](https://imgur.com/3Foafb5.png)
 
-To learn more about Next.js, take a look at the following resources:
+## **High Fidelity UI (Landing Page):**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+![alt text](https://imgur.com/f5IXdkD.png)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`i learned a looot from creating this project - all built from scratch !`
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+_this project made me love web development even more ⭐_
